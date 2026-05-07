@@ -1,0 +1,10 @@
+# .htaccess - Modification Date: August 26, 2025, 12:00 PM - Total Lines: 10
+Options -Indexes
+RewriteEngine On
+RewriteBase /
+RewriteRule ^$ login.php [L,R=301]
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+ErrorDocument 404 "Page Not Found - Contact support."
+SetEnv DB_PASSWORD "60@60Resupplyrocket"
+SetEnv EMAIL_PASSWORD "60@60orders@passwordresupplyrocket"
