@@ -1,0 +1,191 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+.container {
+    max-width: 1000px;
+    width: 100%;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin: 0 auto;
+}
+.logo {
+    display: block;
+    margin: 0 auto 20px;
+    max-width: 150px;
+}
+h1 {
+    text-align: center;
+    color: #007bff;
+}
+form label {
+    display: block;
+    margin: 10px 0 5px;
+}
+form input, form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+.send-it-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    padding: 20px 28px;
+    transition: background-color 0.3s;
+}
+.send-it-btn:hover {
+    background-color: #0056b3;
+}
+.send-it-btn .logo-img {
+    max-width: 36px;
+    margin-right: 12px;
+}
+.logo-img {
+    max-width: 20px;
+    margin-right: 10px;
+    background-color: transparent !important;
+}
+.logo-img.sending {
+    animation: spin 1s linear infinite;
+    background-color: transparent !important;
+}
+#responseMessage {
+    margin-bottom: 15px;
+}
+#responseMessage .success {
+    color: green;
+    font-weight: bold;
+    background-color: #e6ffe6;
+    padding: 15px;
+    border: 2px solid green;
+    border-radius: 4px;
+    font-size: 16px;
+}
+#responseMessage .error {
+    color: red;
+    font-weight: bold;
+    background-color: #ffe6e6;
+    padding: 15px;
+    border: 2px solid red;
+    border-radius: 4px;
+    font-size: 16px;
+}
+a {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 14px;
+}
+.sending {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+.table-responsive {
+    overflow-x: auto;
+}
+.table th, .table td {
+    vertical-align: middle;
+}
+.image-button {
+    cursor: pointer;
+    border: 2px solid #007bff;
+    border-radius: 4px;
+    padding: 2px;
+    transition: border-color 0.3s;
+}
+.image-button:hover {
+    border-color: #0056b3;
+}
+.modal-body img {
+    max-height: 300px;
+    width: auto;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+@media (max-width: 576px) {
+    body {
+        padding: 10px;
+    }
+    .container {
+        padding: 15px;
+    }
+    form input, form textarea {
+        font-size: 14px;
+        padding: 8px;
+    }
+    .send-it-btn {
+        font-size: 22px;
+        padding: 18px 24px;
+    }
+    .send-it-btn .logo-img {
+        max-width: 32px;
+        margin-right: 10px;
+    }
+    .table {
+        font-size: 12px;
+    }
+    .table img.image-button {
+        width: 40px;
+        height: 40px;
+    }
+    .modal-body img {
+        max-height: 200px;
+    }
+    #responseMessage .success, #responseMessage .error {
+        font-size: 14px;
+        padding: 10px;
+    }
+}
+@media (max-width: 576px) {
+    #paint_items thead {
+        display: none;
+    }
+    #paint_items tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+        padding: 0.5rem;
+    }
+    #paint_items td {
+        display: block;
+        text-align: left !important;
+        position: relative;
+        padding: 10px 0 10px 50% !important;
+        border: none;
+    }
+    #paint_items td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: bold;
+        text-align: left;
+    }
+    #paint_items td .form-control, #paint_items td button {
+        width: 100%;
+    }
+    #paint_items td:last-child {
+        padding-top: 0;
+    }
+}
