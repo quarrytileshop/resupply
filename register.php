@@ -1,5 +1,5 @@
 <?php
-// register.php – Modified 2026-05-08 17:25 – Lines: 580
+// register.php – Modified 2026-05-08 – Final Version
 require_once 'config.php';
 require_once 'email_functions.php';
 session_start();
@@ -26,13 +26,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Invalid email format.";
     } else {
-        // Check email
+        // Check if email already exists
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email");
         $stmt->execute(['email' => $email]);
         if ($stmt->fetch()) {
             $error = "An account with this email already exists.";
         } else {
-            // Unique username
+            // Create unique username
             $base_username = $first_name . ' ' . $last_name;
             $username = $base_username;
             $counter = 1;
@@ -60,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = "Resale Number is required for Wholesale organizations.";
                 } else {
                     try {
+                        // Insert Organization
                         $stmt = $pdo->prepare("INSERT INTO organizations 
                             (name, address, mailing_address, contact_name, contact_email, type, resale_number, approval_status) 
                             VALUES (:name, :address, :mailing, :contact_name, :contact_email, :type, :resale, 'pending')");
@@ -74,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ]);
                         $org_id = $pdo->lastInsertId();
 
+                        // Insert User
                         $stmt = $pdo->prepare("INSERT INTO users 
                             (organization_id, first_name, last_name, username, email, phone_number, password_hash, approval_status) 
                             VALUES (:org_id, :fn, :ln, :un, :email, :phone, :hash, 'pending')");
@@ -88,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ]);
 
                         send_email('russellhb2b@gmail.com', "New Organization Pending Approval", 
-                            "New org: $name ($type) by $first_name $last_name", "");
+                            "New org: $name ($type) by $first_name $last_name", "Please review in admin panel.");
 
                         $message = "✅ Registration submitted successfully for approval. You will be notified by email.";
                     } catch (Exception $e) {
@@ -123,8 +125,90 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
 
                         <form method="post" id="registerForm">
-                            <!-- [Full form with dynamic fields - same as last successful version] -->
-                            <!-- Registration type, common fields, newCompanyFields with resale logic, etc. -->
+                            <!-- Registration Type -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">I want to...</label>
+                                <select name="registration_type" id="registrationType" class="form-select form-select-lg" required>
+                                    <option value="">-- Choose --</option>
+                                    <option value="new_company">Create a New Organization</option>
+                                    <option value="join_company">Join an Existing Organization</option>
+                                </select>
+                            </div>
+
+                            <!-- Common Fields -->
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="first_name" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="last_name" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" name="phone" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password <span class="text-danger">*</span></label>
+                                <input type="password" name="password" class="form-control" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                                <input type="password" name="confirm_password" class="form-control" required>
+                            </div>
+
+                            <!-- New Organization Fields -->
+                            <div id="newCompanyFields" style="display: none;">
+                                <hr>
+                                <h4>Organization Details</h4>
+                                <div class="mb-3">
+                                    <label>Organization Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Physical Address <span class="text-danger">*</span></label>
+                                    <textarea name="address" class="form-control" rows="3" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Mailing / Billing Address <span class="text-danger">*</span></label>
+                                    <textarea name="mailing_address" class="form-control" rows="3" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Contact Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="contact_name" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Contact Email <span class="text-danger">*</span></label>
+                                    <input type="email" name="contact_email" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Organization Type <span class="text-danger">*</span></label>
+                                    <select name="organization_type" id="organizationType" class="form-select" required>
+                                        <option value="retail">Retail</option>
+                                        <option value="wholesale">Wholesale</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="resaleContainer" style="display: none;">
+                                    <label>Resale Number <span class="text-danger" id="resaleStar">*</span></label>
+                                    <input type="text" name="organization_resale_number" id="resaleNumber" class="form-control">
+                                </div>
+                            </div>
+
+                            <!-- Join Existing Fields -->
+                            <div id="joinCompanyFields" style="display: none;">
+                                <hr>
+                                <div class="mb-3">
+                                    <label>Organization Account Number <span class="text-danger">*</span></label>
+                                    <input type="text" name="organization_account_number" class="form-control">
+                                </div>
+                            </div>
+
                             <button type="submit" id="submitBtn" class="btn btn-primary btn-lg w-100 mt-4">Submit Registration</button>
                         </form>
 
@@ -149,6 +233,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const isWholesale = $(this).val() === 'wholesale';
             $('#resaleContainer').toggle(isWholesale);
             $('#resaleNumber').prop('required', isWholesale);
+            $('#resaleStar').toggle(isWholesale);
+        });
+
+        $('#registerForm').on('submit', function() {
+            $('#submitBtn').prop('disabled', true).text('Submitting...');
         });
     });
     </script>
