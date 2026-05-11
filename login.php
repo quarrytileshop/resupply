@@ -1,5 +1,5 @@
 <?php
-// login.php – Modified 2026-05-08 – Final Version
+// login.php – Modified 2026-05-11 – Professional Styles v2.0 with Inter font
 require_once 'config.php';
 session_start();
 
@@ -49,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Resupply Rocket</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="bg-light">
