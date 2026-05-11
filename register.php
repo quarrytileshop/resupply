@@ -26,13 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Invalid email format.";
     } else {
-        // Check if email already exists
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email");
         $stmt->execute(['email' => $email]);
         if ($stmt->fetch()) {
             $error = "An account with this email already exists.";
         } else {
-            // Create unique username
             $base_username = $first_name . ' ' . $last_name;
             $username = $base_username;
             $counter = 1;
@@ -60,7 +58,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = "Resale Number is required for Wholesale organizations.";
                 } else {
                     try {
-                        // Insert Organization
                         $stmt = $pdo->prepare("INSERT INTO organizations 
                             (name, address, mailing_address, contact_name, contact_email, type, resale_number, approval_status) 
                             VALUES (:name, :address, :mailing, :contact_name, :contact_email, :type, :resale, 'pending')");
@@ -75,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ]);
                         $org_id = $pdo->lastInsertId();
 
-                        // Insert User
                         $stmt = $pdo->prepare("INSERT INTO users 
                             (organization_id, first_name, last_name, username, email, phone_number, password_hash, approval_status) 
                             VALUES (:org_id, :fn, :ln, :un, :email, :phone, :hash, 'pending')");
@@ -90,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ]);
 
                         send_email('russellhb2b@gmail.com', "New Organization Pending Approval", 
-                            "New org: $name ($type) by $first_name $last_name", "Please review in admin panel.");
+                            "New org: $name ($type) by $first_name $last_name", "");
 
                         $message = "✅ Registration submitted successfully for approval. You will be notified by email.";
                     } catch (Exception $e) {
@@ -233,7 +229,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const isWholesale = $(this).val() === 'wholesale';
             $('#resaleContainer').toggle(isWholesale);
             $('#resaleNumber').prop('required', isWholesale);
-            $('#resaleStar').toggle(isWholesale);
         });
 
         $('#registerForm').on('submit', function() {
