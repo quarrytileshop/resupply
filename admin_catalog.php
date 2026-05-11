@@ -1,5 +1,5 @@
 <?php
-// admin_catalog.php – Final Version – Modified 2026-05-08
+// admin_catalog.php – Final Clean Version – Modified 2026-05-08
 require_once 'config.php';
 session_start();
 
@@ -48,12 +48,12 @@ $items = $stmt->fetchAll();
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>Image</th>
+                        <th style="width:80px;">Image</th>
                         <th>Item Name</th>
                         <th>SKU</th>
                         <th>Price</th>
                         <th>Type</th>
-                        <th>Actions</th>
+                        <th style="width:140px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,7 +61,7 @@ $items = $stmt->fetchAll();
                     <tr>
                         <td>
                             <?php if (!empty($item['image_url'])): ?>
-                                <img src="<?= htmlspecialchars($item['image_url']) ?>" alt="" style="width:60px; height:60px; object-fit:cover;">
+                                <img src="<?= htmlspecialchars($item['image_url']) ?>" alt="" style="width:60px; height:60px; object-fit:cover; border-radius:4px;">
                             <?php else: ?>
                                 <span class="text-muted">—</span>
                             <?php endif; ?>
@@ -71,7 +71,7 @@ $items = $stmt->fetchAll();
                         <td>$<?= number_format($item['price'] ?? 0, 2) ?></td>
                         <td><?= htmlspecialchars($item['item_type'] ?? 'general') ?></td>
                         <td>
-                            <button class="btn btn-sm btn-primary">Edit</button>
+                            <button class="btn btn-sm btn-primary me-1">Edit</button>
                             <button class="btn btn-sm btn-danger">Delete</button>
                         </td>
                     </tr>
