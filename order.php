@@ -8,7 +8,6 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
 $is_propane = $_SESSION['is_propane'] ?? 0;
 ?>
 
@@ -37,48 +36,42 @@ $is_propane = $_SESSION['is_propane'] ?? 0;
 
     <div class="container mt-4">
         <h1>New Order</h1>
+        <p class="text-muted">Choose the type of order you want to place</p>
 
-        <!-- Order Type Tabs -->
-        <ul class="nav nav-tabs mb-4" id="orderTabs">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#general">General Products</a></li>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <a href="general_order.php" class="text-decoration-none">
+                    <div class="card h-100 text-center p-5 border-primary">
+                        <h4>General Products</h4>
+                        <p class="text-muted">Shopping lists, catalog items, manual entries</p>
+                    </div>
+                </a>
+            </div>
             <?php if ($is_propane): ?>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#propane">Propane</a></li>
+            <div class="col-md-4">
+                <a href="propane_order.php" class="text-decoration-none">
+                    <div class="card h-100 text-center p-5 border-warning">
+                        <h4>Propane</h4>
+                        <p class="text-muted">Tank exchanges &amp; new fills</p>
+                    </div>
+                </a>
+            </div>
             <?php endif; ?>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#paint">Paint</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#checkbox">Checkbox List</a></li>
-        </ul>
-
-        <div class="tab-content">
-            <!-- General Products Tab -->
-            <div class="tab-pane fade show active" id="general">
-                <div class="alert alert-info">
-                    Shopping lists will appear here. Quantities update instantly.
-                </div>
-                <p><em>(Full shopping list + cart interface coming soon)</em></p>
+            <div class="col-md-4">
+                <a href="paint_order.php" class="text-decoration-none">
+                    <div class="card h-100 text-center p-5 border-info">
+                        <h4>Paint Order</h4>
+                        <p class="text-muted">Guided color &amp; finish selection</p>
+                    </div>
+                </a>
             </div>
-
-            <!-- Propane Tab -->
-            <div class="tab-pane fade" id="propane">
-                <div class="alert alert-warning">
-                    Propane Order Form – Simple exchange / new tanks
-                </div>
-                <p><em>(Propane form will go here)</em></p>
-            </div>
-
-            <!-- Paint Tab -->
-            <div class="tab-pane fade" id="paint">
-                <div class="alert alert-info">
-                    Guided Paint Order (size, type, sheen, color…)
-                </div>
-                <p><em>(Paint guided questions will go here)</em></p>
-            </div>
-
-            <!-- Checkbox Tab -->
-            <div class="tab-pane fade" id="checkbox">
-                <div class="alert alert-secondary">
-                    Create Checkbox List for in-store / team use
-                </div>
-                <p><em>(Checkbox list builder coming soon)</em></p>
+            <div class="col-md-4">
+                <a href="checkbox_create.php" class="text-decoration-none">
+                    <div class="card h-100 text-center p-5 border-secondary">
+                        <h4>Checkbox List</h4>
+                        <p class="text-muted">In-store or team checklist</p>
+                    </div>
+                </a>
             </div>
         </div>
 
