@@ -8,7 +8,6 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['is_admin']) {
     exit;
 }
 
-// Fetch catalog items using correct column names
 $stmt = $pdo->query("SELECT * FROM catalog_items ORDER BY item_name");
 $items = $stmt->fetchAll();
 ?>
@@ -61,7 +60,7 @@ $items = $stmt->fetchAll();
                     <tr>
                         <td>
                             <?php if (!empty($item['image_url'])): ?>
-                                <img src="<?= htmlspecialchars($item['image_url']) ?>" alt="" style="width:60px; height:60px; object-fit:cover; border-radius:4px;">
+                                <img src="<?= htmlspecialchars($item['image_url']) ?>" alt="" style="width:60px;height:60px;object-fit:cover;border-radius:4px;">
                             <?php else: ?>
                                 <span class="text-muted">—</span>
                             <?php endif; ?>
