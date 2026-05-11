@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $organization_id = $_SESSION['organization_id'] ?? 0;
 
-// Fetch available shopping lists for this organization
+// Fetch shopping lists for this organization
 $stmt = $pdo->prepare("SELECT * FROM shopping_lists 
                        WHERE organization_id = :org_id OR is_global = 1 
                        ORDER BY name");
@@ -37,6 +37,7 @@ $lists = $stmt->fetchAll();
                 <a class="nav-link" href="dashboard.php">Dashboard</a>
                 <a class="nav-link active" href="shopping_lists.php">Shopping Lists</a>
                 <a class="nav-link" href="order.php">New Order</a>
+                <a class="nav-link" href="history.php">History</a>
                 <a class="nav-link" href="logout.php">Logout</a>
             </div>
         </div>
@@ -44,17 +45,18 @@ $lists = $stmt->fetchAll();
 
     <div class="container mt-4">
         <h1>Your Shopping Lists</h1>
+        <p class="text-muted">Select a list to start ordering</p>
 
         <?php if (empty($lists)): ?>
             <div class="alert alert-info">No shopping lists available yet.</div>
         <?php else: ?>
-            <div class="row">
+            <div class="row g-4">
                 <?php foreach ($lists as $list): ?>
-                <div class="col-md-6 col-lg-4 mb-4">
+                <div class="col-md-6 col-lg-4">
                     <div class="card h-100">
                         <div class="card-body">
                             <h5 class="card-title"><?= htmlspecialchars($list['name']) ?></h5>
-                            <p class="card-text text-muted"><?= htmlspecialchars($list['description'] ?? '') ?></p>
+                            <p class="card-text text-muted"><?= htmlspecialchars($list['description'] ?? 'No description') ?></p>
                             <a href="general_order.php?list_id=<?= $list['id'] ?>" class="btn btn-primary w-100">
                                 Use This List
                             </a>
