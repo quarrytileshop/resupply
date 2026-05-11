@@ -20,6 +20,7 @@ $items = $stmt->fetchAll();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Catalog Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="bg-light">
     <!-- Top Navigation -->
@@ -62,7 +63,7 @@ $items = $stmt->fetchAll();
                             <?php if (!empty($item['image'])): ?>
                                 <img src="<?= htmlspecialchars($item['image']) ?>" alt="" style="width:60px;height:60px;object-fit:cover;">
                             <?php else: ?>
-                                <span class="text-muted">No image</span>
+                                <span class="text-muted">—</span>
                             <?php endif; ?>
                         </td>
                         <td><?= htmlspecialchars($item['name']) ?></td>
