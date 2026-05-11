@@ -74,8 +74,64 @@ $all = $pdo->query("SELECT * FROM organizations ORDER BY approval_status, id DES
         </ul>
 
         <div class="tab-content">
-            <!-- Pending, Approved, All tabs as in previous message -->
-            <!-- (Full tab content from my previous response) -->
+            <!-- Pending Tab -->
+            <div class="tab-pane fade show active" id="pending">
+                <?php if (empty($pending)): ?>
+                    <div class="alert alert-info">No pending organizations.</div>
+                <?php else: ?>
+                    <table class="table table-striped">
+                        <thead><tr><th>Name</th><th>Contact</th><th>Type</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <?php foreach ($pending as $org): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($org['name']) ?></td>
+                                <td><?= htmlspecialchars($org['contact_email']) ?></td>
+                                <td><?= htmlspecialchars($org['type']) ?></td>
+                                <td><button onclick="approveOrg(<?= $org['id'] ?>)" class="btn btn-success btn-sm">Approve</button></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            </div>
+
+            <!-- Approved Tab -->
+            <div class="tab-pane fade" id="approved">
+                <?php if (empty($approved)): ?>
+                    <div class="alert alert-info">No approved organizations yet.</div>
+                <?php else: ?>
+                    <table class="table table-striped">
+                        <thead><tr><th>Name</th><th>Contact</th><th>Account #</th><th>Type</th></tr></thead>
+                        <tbody>
+                            <?php foreach ($approved as $org): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($org['name']) ?></td>
+                                <td><?= htmlspecialchars($org['contact_email']) ?></td>
+                                <td><?= htmlspecialchars($org['account_number'] ?? '—') ?></td>
+                                <td><?= htmlspecialchars($org['type']) ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            </div>
+
+            <!-- All Tab -->
+            <div class="tab-pane fade" id="all">
+                <table class="table table-striped">
+                    <thead><tr><th>Name</th><th>Status</th><th>Account #</th><th>Type</th></tr></thead>
+                    <tbody>
+                        <?php foreach ($all as $org): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($org['name']) ?></td>
+                            <td><span class="badge bg-<?= $org['approval_status'] === 'approved' ? 'success' : ($org['approval_status'] === 'pending' ? 'warning' : 'secondary') ?>"><?= ucfirst($org['approval_status']) ?></span></td>
+                            <td><?= htmlspecialchars($org['account_number'] ?? '—') ?></td>
+                            <td><?= htmlspecialchars($org['type']) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
