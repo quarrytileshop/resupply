@@ -1,5 +1,7 @@
 <?php
-// index.php - Modification Date: August 08, 2025, 7:30 PM PDT - Total Lines: 5
+// index.php – Modified 2026-05-08 – Lines: 15
+// Simple redirect to login page
+
 header("Location: login.php");
 exit;
 ?>
