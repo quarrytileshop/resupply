@@ -1,5 +1,5 @@
 <?php
-// admin_organizations.php – Modified 2026-05-08 17:45 – Lines: 480
+// admin_organizations.php – Modified 2026-05-08 – Lines: 480
 require_once 'config.php';
 require_once 'email_functions.php';
 session_start();
@@ -33,10 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Fetch data
-$pending = $pdo->query("SELECT * FROM organizations WHERE approval_status = 'pending' ORDER BY id DESC")->fetchAll();
+// Fetch data for tabs
+$pending  = $pdo->query("SELECT * FROM organizations WHERE approval_status = 'pending' ORDER BY id DESC")->fetchAll();
 $approved = $pdo->query("SELECT * FROM organizations WHERE approval_status = 'approved' ORDER BY id DESC")->fetchAll();
-$all = $pdo->query("SELECT * FROM organizations ORDER BY approval_status, id DESC")->fetchAll();
+$all      = $pdo->query("SELECT * FROM organizations ORDER BY approval_status, id DESC")->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -70,7 +70,7 @@ $all = $pdo->query("SELECT * FROM organizations ORDER BY approval_status, id DES
         <ul class="nav nav-tabs mb-4">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#pending">Pending</a></li>
             <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#approved">Approved</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#all">All</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#all">All Organizations</a></li>
         </ul>
 
         <div class="tab-content">
