@@ -1,5 +1,5 @@
 <?php
-// order.php – Modified 2026-05-08 – Lines: 120
+// order.php – Modified 2026-05-08 – Lines: 180
 require_once 'config.php';
 session_start();
 
@@ -8,8 +8,8 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// TODO: Add full order logic later (General / Propane / Paint tabs)
 $user_id = $_SESSION['user_id'];
+$is_propane = $_SESSION['is_propane'] ?? 0;
 ?>
 
 <!DOCTYPE html>
@@ -19,6 +19,7 @@ $user_id = $_SESSION['user_id'];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New Order - Resupply Rocket</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="bg-light">
     <!-- Top Navigation -->
@@ -36,26 +37,48 @@ $user_id = $_SESSION['user_id'];
 
     <div class="container mt-4">
         <h1>New Order</h1>
-        <p class="text-muted">Select order type below</p>
 
-        <div class="row g-4">
-            <div class="col-md-4">
-                <a href="#" class="btn btn-primary btn-lg w-100 py-5 text-center">
-                    <strong>General Products</strong><br>
-                    <small>Shopping lists &amp; catalog</small>
-                </a>
+        <!-- Order Type Tabs -->
+        <ul class="nav nav-tabs mb-4" id="orderTabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#general">General Products</a></li>
+            <?php if ($is_propane): ?>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#propane">Propane</a></li>
+            <?php endif; ?>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#paint">Paint</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#checkbox">Checkbox List</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- General Products Tab -->
+            <div class="tab-pane fade show active" id="general">
+                <div class="alert alert-info">
+                    Shopping lists will appear here. Quantities update instantly.
+                </div>
+                <p><em>(Full shopping list + cart interface coming soon)</em></p>
             </div>
-            <div class="col-md-4">
-                <a href="#" class="btn btn-warning btn-lg w-100 py-5 text-center">
-                    <strong>Propane</strong><br>
-                    <small>Exchange / New tanks</small>
-                </a>
+
+            <!-- Propane Tab -->
+            <div class="tab-pane fade" id="propane">
+                <div class="alert alert-warning">
+                    Propane Order Form – Simple exchange / new tanks
+                </div>
+                <p><em>(Propane form will go here)</em></p>
             </div>
-            <div class="col-md-4">
-                <a href="#" class="btn btn-info btn-lg w-100 py-5 text-center">
-                    <strong>Paint</strong><br>
-                    <small>Guided color selection</small>
-                </a>
+
+            <!-- Paint Tab -->
+            <div class="tab-pane fade" id="paint">
+                <div class="alert alert-info">
+                    Guided Paint Order (size, type, sheen, color…)
+                </div>
+                <p><em>(Paint guided questions will go here)</em></p>
+            </div>
+
+            <!-- Checkbox Tab -->
+            <div class="tab-pane fade" id="checkbox">
+                <div class="alert alert-secondary">
+                    Create Checkbox List for in-store / team use
+                </div>
+                <p><em>(Checkbox list builder coming soon)</em></p>
             </div>
         </div>
 
