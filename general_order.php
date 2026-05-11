@@ -1,5 +1,5 @@
 <?php
-// general_order.php – Modified 2026-05-08 – Lines: 220
+// general_order.php – Modified 2026-05-08 – Lines: 260
 require_once 'config.php';
 session_start();
 
@@ -8,7 +8,6 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
 $organization_id = $_SESSION['organization_id'] ?? 0;
 ?>
 
@@ -37,31 +36,30 @@ $organization_id = $_SESSION['organization_id'] ?? 0;
 
     <div class="container mt-4">
         <h1>General Products Order</h1>
-        <p class="text-muted">Select quantities from your shopping lists. Changes save automatically.</p>
+        <p class="text-muted">Type quantities to add items instantly. Changes save automatically.</p>
 
         <!-- Shopping Lists Tabs -->
         <ul class="nav nav-tabs mb-4" id="listTabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#all-lists">All Lists</a></li>
-            <!-- Dynamic tabs for admin-created lists will go here -->
         </ul>
 
         <div class="row">
-            <!-- Products / Cart Area -->
+            <!-- Products Area -->
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-body">
                         <h5>Available Products</h5>
                         <div class="alert alert-info">
-                            Shopping list items with images, prices, and quantity inputs will appear here.<br>
-                            <strong>Typing a quantity instantly updates the cart.</strong>
+                            <strong>Shopping list items will appear here.</strong><br>
+                            Type a quantity in the box next to each item to add to cart.
                         </div>
                         <!-- Placeholder for product grid -->
-                        <p><em>Product catalog integration coming in next phase.</em></p>
+                        <p><em>Full product catalog with images and live quantity inputs coming soon.</em></p>
                     </div>
                 </div>
             </div>
 
-            <!-- Live Cart Sidebar -->
+            <!-- Live Cart -->
             <div class="col-lg-4">
                 <div class="card sticky-top" style="top: 20px;">
                     <div class="card-header bg-primary text-white">
@@ -69,8 +67,7 @@ $organization_id = $_SESSION['organization_id'] ?? 0;
                     </div>
                     <div class="card-body">
                         <div id="cart-items">
-                            <!-- Items added here dynamically -->
-                            <p class="text-muted">No items yet. Start typing quantities above.</p>
+                            <p class="text-muted">No items yet.</p>
                         </div>
                         
                         <hr>
@@ -96,14 +93,14 @@ $organization_id = $_SESSION['organization_id'] ?? 0;
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
     function sendOrder() {
         if (confirm("Send this order now?")) {
-            alert("🚀 Rocket animation would trigger here + order sent!");
-            // Future: AJAX to process order
+            alert("🚀 Order sent! (Rocket animation would trigger here)");
+            // Future: AJAX submission
         }
     }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
