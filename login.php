@@ -1,5 +1,5 @@
 <?php
-// login.php – Modified 2026-05-08
+// login.php – Modified 2026-05-08 – Final Version
 require_once 'config.php';
 session_start();
 
@@ -10,16 +10,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
 
     if ($email && $password) {
-        $stmt = $pdo->prepare("SELECT id, username, first_name, last_name, password_hash, is_admin, approval_status, suspended, organization_id, is_propane 
+        $stmt = $pdo->prepare("SELECT id, username, first_name, last_name, password_hash, 
+                                      is_admin, approval_status, suspended, organization_id, is_propane 
                                FROM users WHERE email = :email");
         $stmt->execute(['email' => $email]);
         $user = $stmt->fetch();
 
         if ($user && password_verify($password, $user['password_hash'])) {
             if ($user['approval_status'] !== 'approved') {
-                $error = "Account is pending approval.";
+                $error = "Your account is pending approval.";
             } elseif ($user['suspended']) {
-                $error = "Account is suspended.";
+                $error = "Your account has been suspended.";
             } else {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
@@ -35,6 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error = "Invalid email or password.";
         }
+    } else {
+        $error = "Please enter email and password.";
     }
 }
 ?>
@@ -46,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Resupply Rocket</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="bg-light">
     <div class="container py-5">
@@ -55,25 +59,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="card-body p-5">
                         <img src="icons/logo-192.png" alt="Logo" class="mx-auto d-block mb-4" style="max-width:150px;">
                         <h2 class="text-center mb-4">Login</h2>
-                        <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+
+                        <?php if ($error): ?>
+                            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+                        <?php endif; ?>
+
                         <form method="post">
                             <div class="mb-3">
-                                <label>Email</label>
+                                <label class="form-label">Email</label>
                                 <input type="email" name="email" class="form-control" required>
                             </div>
                             <div class="mb-3">
-                                <label>Password</label>
+                                <label class="form-label">Password</label>
                                 <input type="password" name="password" class="form-control" required>
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Login</button>
                         </form>
+
                         <div class="text-center mt-3">
-                            <a href="register.php">Register</a> | <a href="forgot_password.php">Forgot Password?</a>
+                            <a href="register.php">Register New Account</a> | 
+                            <a href="forgot_password.php">Forgot Password?</a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
