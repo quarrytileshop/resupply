@@ -1,5 +1,5 @@
 <?php
-// config.php – Modified 2026-05-08
+// config.php – Modified 2026-05-08 – Final Version
 $dsn = 'mysql:host=localhost;dbname=resupply_test';
 $db_username = 'russelltest';
 $db_password = '60@60Resupplyrocket';
