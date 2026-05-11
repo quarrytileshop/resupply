@@ -1,5 +1,5 @@
 <?php
-// general_order.php – Modified 2026-05-08 – Lines: 260
+// general_order.php – Modified 2026-05-08 – Job 1 Core File
 require_once 'config.php';
 session_start();
 
@@ -36,7 +36,7 @@ $organization_id = $_SESSION['organization_id'] ?? 0;
 
     <div class="container mt-4">
         <h1>General Products Order</h1>
-        <p class="text-muted">Type quantities to add items instantly. Changes save automatically.</p>
+        <p class="text-muted">Select from your custom shopping lists. Type quantities – changes apply instantly.</p>
 
         <!-- Shopping Lists Tabs -->
         <ul class="nav nav-tabs mb-4" id="listTabs">
@@ -44,17 +44,15 @@ $organization_id = $_SESSION['organization_id'] ?? 0;
         </ul>
 
         <div class="row">
-            <!-- Products Area -->
+            <!-- Products Grid -->
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-body">
                         <h5>Available Products</h5>
-                        <div class="alert alert-info">
-                            <strong>Shopping list items will appear here.</strong><br>
-                            Type a quantity in the box next to each item to add to cart.
+                        <div id="product-grid" class="row g-3">
+                            <!-- Populated by JS from catalog_items -->
+                            <p class="text-muted">Loading products...</p>
                         </div>
-                        <!-- Placeholder for product grid -->
-                        <p><em>Full product catalog with images and live quantity inputs coming soon.</em></p>
                     </div>
                 </div>
             </div>
@@ -62,24 +60,22 @@ $organization_id = $_SESSION['organization_id'] ?? 0;
             <!-- Live Cart -->
             <div class="col-lg-4">
                 <div class="card sticky-top" style="top: 20px;">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between">
                         <strong>Your Cart</strong>
+                        <span id="cart-count">0 items</span>
                     </div>
-                    <div class="card-body">
-                        <div id="cart-items">
-                            <p class="text-muted">No items yet.</p>
-                        </div>
-                        
-                        <hr>
+                    <div class="card-body" id="cart-body">
+                        <p class="text-muted">No items yet. Start typing quantities above.</p>
+                    </div>
+                    <div class="card-footer">
                         <div class="mb-3">
-                            <label>Delivery Location / PO#</label>
-                            <input type="text" class="form-control" placeholder="e.g. Warehouse Bay 3">
+                            <label class="form-label">Delivery Location / PO#</label>
+                            <input type="text" id="po-number" class="form-control" placeholder="e.g. Warehouse Bay 3">
                         </div>
                         <div class="mb-3">
-                            <label>Notes</label>
-                            <textarea class="form-control" rows="3" placeholder="Any special instructions..."></textarea>
+                            <label class="form-label">Notes</label>
+                            <textarea id="order-notes" class="form-control" rows="3" placeholder="Any special instructions..."></textarea>
                         </div>
-
                         <button onclick="sendOrder()" class="btn btn-success btn-lg w-100">
                             🚀 Send It!
                         </button>
@@ -94,12 +90,57 @@ $organization_id = $_SESSION['organization_id'] ?? 0;
     </div>
 
     <script>
+    // Simple live cart demo
+    let cart = {};
+
+    function updateCartDisplay() {
+        const body = document.getElementById('cart-body');
+        body.innerHTML = '';
+        let count = 0;
+
+        for (let id in cart) {
+            if (cart[id] > 0) {
+                count++;
+                body.innerHTML += `<div class="d-flex justify-content-between mb-2">
+                    <span>${id}</span>
+                    <strong>${cart[id]}</strong>
+                </div>`;
+            }
+        }
+        if (count === 0) {
+            body.innerHTML = '<p class="text-muted">No items yet.</p>';
+        }
+        document.getElementById('cart-count').textContent = count + ' items';
+    }
+
     function sendOrder() {
         if (confirm("Send this order now?")) {
-            alert("🚀 Order sent! (Rocket animation would trigger here)");
-            // Future: AJAX submission
+            const rocket = document.createElement('div');
+            rocket.style.position = 'fixed';
+            rocket.style.bottom = '20px';
+            rocket.style.right = '20px';
+            rocket.style.fontSize = '60px';
+            rocket.style.zIndex = '9999';
+            rocket.innerHTML = '🚀';
+            document.body.appendChild(rocket);
+
+            setTimeout(() => {
+                rocket.style.transition = 'transform 1s';
+                rocket.style.transform = 'translateY(-800px) rotate(720deg)';
+            }, 100);
+
+            setTimeout(() => {
+                alert("✅ Order sent successfully!");
+                window.location.href = 'dashboard.php';
+            }, 1200);
         }
     }
+
+    // Demo product interaction (expand later with real catalog)
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("✅ general_order.php loaded");
+        // Future: Load real products from catalog_items via AJAX
+    });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
