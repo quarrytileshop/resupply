@@ -1,10 +1,32 @@
-# .htaccess - Modification Date: August 26, 2025, 12:00 PM - Total Lines: 10
+# .htaccess – Modified 2026-05-08
+
+# Security headers
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Enable compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
+</IfModule>
+
+# Prevent directory listing
 Options -Indexes
+
+# Redirect all traffic to HTTPS (uncomment when live)
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}$1 [R=301,L]
+
+# Simple clean URLs (optional)
 RewriteEngine On
-RewriteBase /
-RewriteRule ^$ login.php [L,R=301]
-RewriteCond %{HTTPS} off
-RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-ErrorDocument 404 "Page Not Found - Contact support."
-SetEnv DB_PASSWORD "60@60Resupplyrocket"
-SetEnv EMAIL_PASSWORD "60@60orders@passwordresupplyrocket"
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Protect sensitive files
+<FilesMatch "^(config\.php|database-setup\.sql|\.env|.*\.md)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
