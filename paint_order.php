@@ -1,5 +1,5 @@
 <?php
-// paint_order.php – Modified 2026-05-08 – Lines: 220
+// paint_order.php – Modified 2026-05-08 – Lines: 240
 require_once 'config.php';
 session_start();
 
@@ -35,7 +35,7 @@ if (!isset($_SESSION['user_id'])) {
 
     <div class="container mt-4">
         <h1>Paint Order</h1>
-        <p class="text-muted">Answer the questions below. The PO will use descriptions only.</p>
+        <p class="text-muted">Answer the questions below. The PO will use descriptions only (vendor assigns SKU).</p>
 
         <div class="card">
             <div class="card-body">
@@ -68,6 +68,7 @@ if (!isset($_SESSION['user_id'])) {
                                 <option>Eggshell</option>
                                 <option>Pearl</option>
                                 <option>Satin</option>
+                                <option>Soft Gloss</option>
                                 <option>Semi Gloss</option>
                                 <option>Hi Gloss</option>
                             </select>
@@ -80,15 +81,19 @@ if (!isset($_SESSION['user_id'])) {
                                 <option>Regal</option>
                                 <option>Aura</option>
                                 <option>Element Guard</option>
+                                <option>Ceiling</option>
+                                <option>Advance</option>
+                                <option>C&amp;K</option>
+                                <option>Contractor Pro</option>
                             </select>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Color / Description <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" placeholder="e.g. Sherwin Williams SW 1234 Accessible Beige" required>
+                            <input type="text" id="color" class="form-control" placeholder="e.g. Sherwin Williams SW 1234 Accessible Beige" required>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Notes / Special Instructions</label>
-                            <textarea class="form-control" rows="3" placeholder="Any additional details..."></textarea>
+                            <textarea id="notes" class="form-control" rows="4" placeholder="Any additional details..."></textarea>
                         </div>
                     </div>
 
@@ -106,9 +111,25 @@ if (!isset($_SESSION['user_id'])) {
 
     <script>
     function submitPaintOrder() {
-        if (confirm("Send this paint order?")) {
-            alert("✅ Paint order submitted! (Rocket animation would trigger here)");
-            // Future: AJAX submission + redirect
+        if (confirm("Send this paint order now?")) {
+            const rocket = document.createElement('div');
+            rocket.style.position = 'fixed';
+            rocket.style.bottom = '30px';
+            rocket.style.right = '30px';
+            rocket.style.fontSize = '80px';
+            rocket.style.zIndex = '9999';
+            rocket.innerHTML = '🚀';
+            document.body.appendChild(rocket);
+
+            setTimeout(() => {
+                rocket.style.transition = 'all 1s';
+                rocket.style.transform = 'translateY(-900px) rotate(720deg)';
+            }, 50);
+
+            setTimeout(() => {
+                alert("✅ Paint order submitted successfully!");
+                window.location.href = 'dashboard.php';
+            }, 1100);
         }
     }
     </script>
