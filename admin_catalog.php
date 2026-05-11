@@ -1,5 +1,5 @@
 <?php
-// admin_catalog.php – Modified 2026-05-08 – Lines: 160
+// admin_catalog.php – Modified 2026-05-08 – Lines: 220
 require_once 'config.php';
 session_start();
 
@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['is_admin']) {
     exit;
 }
 
-// Fetch all catalog items
+// Fetch catalog items
 $stmt = $pdo->query("SELECT * FROM catalog_items ORDER BY name");
 $items = $stmt->fetchAll();
 ?>
@@ -39,7 +39,7 @@ $items = $stmt->fetchAll();
 
     <div class="container mt-4">
         <h1>Catalog Management</h1>
-        <p class="text-muted">Total products: <?= count($items) ?></p>
+        <p class="text-muted">Total items: <?= count($items) ?></p>
 
         <a href="#" class="btn btn-success mb-3">+ Add New Product</a>
 
@@ -59,8 +59,10 @@ $items = $stmt->fetchAll();
                     <?php foreach ($items as $item): ?>
                     <tr>
                         <td>
-                            <?php if ($item['image']): ?>
-                                <img src="<?= htmlspecialchars($item['image']) ?>" alt="" style="width:60px; height:60px; object-fit:cover;">
+                            <?php if (!empty($item['image'])): ?>
+                                <img src="<?= htmlspecialchars($item['image']) ?>" alt="" style="width:60px;height:60px;object-fit:cover;">
+                            <?php else: ?>
+                                <span class="text-muted">No image</span>
                             <?php endif; ?>
                         </td>
                         <td><?= htmlspecialchars($item['name']) ?></td>
