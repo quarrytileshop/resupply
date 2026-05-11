@@ -1,5 +1,5 @@
 <?php
-// view_order.php – Modified 2026-05-08 – Lines: 160
+// view_order.php – Modified 2026-05-08 – Lines: 180
 require_once 'config.php';
 session_start();
 
@@ -15,7 +15,7 @@ if ($order_id === 0) {
     exit;
 }
 
-// Fetch order + items (basic for now)
+// Fetch order details
 $stmt = $pdo->prepare("SELECT o.*, u.first_name, u.last_name, org.name as organization_name 
                        FROM orders o 
                        JOIN users u ON o.user_id = u.id 
@@ -39,6 +39,18 @@ if (!$order) {
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="bg-light">
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="dashboard.php">Resupply Rocket</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="dashboard.php">Dashboard</a>
+                <a class="nav-link" href="history.php">History</a>
+                <a class="nav-link" href="logout.php">Logout</a>
+            </div>
+        </div>
+    </nav>
+
     <div class="container mt-4">
         <h1>Order #<?= htmlspecialchars($order['po_number'] ?? $order_id) ?></h1>
         <p><strong>Date:</strong> <?= date('M j, Y g:i A', strtotime($order['created_at'])) ?></p>
@@ -51,7 +63,7 @@ if (!$order) {
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
-                    Full itemized list with quantities and prices will appear here in the next update.
+                    Full itemized list (with quantities, prices, and PO mirroring) will appear here in the next update.
                 </div>
                 <!-- Placeholder for order items table -->
             </div>
