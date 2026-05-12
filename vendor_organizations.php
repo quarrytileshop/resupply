@@ -1,5 +1,5 @@
 <?php
-// vendor_organizations.php – Updated with vendor_id isolation – 2026-05-11
+// vendor_organizations.php – Full expanded version with vendor_id isolation – 2026-05-11
 $page_title = "My Customer Organizations - Resupply Rocket";
 require_once 'header.php';
 
@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $stmt = $pdo->prepare("INSERT INTO organizations (name, account_number, vendor_id, approval_status) 
                               VALUES (:name, :account_number, :vendor_id, 'approved')");
         $stmt->execute(['name' => $name, 'account_number' => $account_number, 'vendor_id' => $vendor_id]);
-        $success = "Customer organization added!";
+        $success = "Customer organization added successfully!";
     }
 }
 
@@ -36,7 +36,7 @@ $organizations = $stmt->fetchAll();
         <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
     <?php endif; ?>
 
-    <!-- Add new form (same as before) -->
+    <!-- Add new organization form -->
     <div class="card mb-5">
         <div class="card-header">Add New Customer Organization</div>
         <div class="card-body">
@@ -52,22 +52,41 @@ $organizations = $stmt->fetchAll();
                         <input type="text" name="account_number" class="form-control">
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100">Add</button>
+                        <button type="submit" class="btn btn-primary w-100">Add Organization</button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Table of organizations (filtered by vendor_id) -->
+    <!-- List of customer organizations -->
     <div class="card">
         <div class="card-body">
             <?php if (empty($organizations)): ?>
-                <p class="text-muted">No customer organizations yet.</p>
+                <p class="text-muted">No customer organizations yet. Add one above.</p>
             <?php else: ?>
                 <div class="table-responsive">
-                    <table class="table">
-                        <!-- same table as before, but only your organizations -->
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Account #</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($organizations as $org): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($org['name']) ?></td>
+                                <td><?= htmlspecialchars($org['account_number'] ?? '—') ?></td>
+                                <td><span class="badge bg-success">Approved</span></td>
+                                <td>
+                                    <a href="shopping_list_builder.php?org_id=<?= $org['id'] ?>" class="btn btn-sm btn-primary">Build List</a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
                     </table>
                 </div>
             <?php endif; ?>
@@ -75,7 +94,7 @@ $organizations = $stmt->fetchAll();
     </div>
 
     <div class="mt-4">
-        <a href="vendor_dashboard.php" class="btn btn-secondary">← Back</a>
+        <a href="vendor_dashboard.php" class="btn btn-secondary">← Back to Vendor Dashboard</a>
     </div>
 </div>
 
