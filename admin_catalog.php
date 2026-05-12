@@ -1,85 +1,108 @@
 <?php
-// admin_catalog.php – Final Clean Version – Modified 2026-05-08
-require_once 'config.php';
-session_start();
+// admin_catalog.php – Updated for vendor-scoped catalog – 2026-05-11
+$page_title = "Catalog Management - Resupply Rocket";
+require_once 'header.php';
 
-if (!isset($_SESSION['user_id']) || !$_SESSION['is_admin']) {
-    header("Location: login.php");
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_organization_admin']) && !isset($_SESSION['is_admin'])) {
+    header("Location: dashboard.php");
     exit;
 }
 
+// For now we show all items; in future this will filter by vendor_id
 $stmt = $pdo->query("SELECT * FROM catalog_items ORDER BY item_name");
-$items = $stmt->fetchAll();
+$catalog_items = $stmt->fetchAll();
+
+// Handle adding a new catalog item
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_item') {
+    $item_name = trim($_POST['item_name'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $price = (float)($_POST['price'] ?? 0);
+    
+    if ($item_name && $price > 0) {
+        $stmt = $pdo->prepare("INSERT INTO catalog_items (item_name, description, price) 
+                              VALUES (:item_name, :description, :price)");
+        $stmt->execute([
+            'item_name' => $item_name,
+            'description' => $description,
+            'price' => $price
+        ]);
+        $success = "Catalog item added successfully!";
+        // Refresh list
+        $stmt = $pdo->query("SELECT * FROM catalog_items ORDER BY item_name");
+        $catalog_items = $stmt->fetchAll();
+    }
+}
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Catalog Management</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
-</head>
-<body class="bg-light">
-    <!-- Top Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="admin_dashboard.php">Resupply Rocket Admin</a>
-            <div class="navbar-nav">
-                <a class="nav-link" href="admin_dashboard.php">Dashboard</a>
-                <a class="nav-link" href="admin_organizations.php">Organizations</a>
-                <a class="nav-link" href="admin_users.php">Users</a>
-                <a class="nav-link active" href="admin_catalog.php">Catalog</a>
-                <a class="nav-link" href="admin_orders.php">Orders</a>
-                <a class="nav-link" href="logout.php">Logout</a>
-            </div>
-        </div>
-    </nav>
+<div class="container mt-4">
+    <h1 class="mb-3">Catalog Management</h1>
+    <p class="text-muted">Items shown here are available for all your customer shopping lists.</p>
 
-    <div class="container mt-4">
-        <h1>Catalog Management</h1>
-        <p class="text-muted">Total items: <?= count($items) ?></p>
+    <?php if (isset($success)): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+    <?php endif; ?>
 
-        <a href="#" class="btn btn-success mb-3">+ Add New Product</a>
-
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th style="width:80px;">Image</th>
-                        <th>Item Name</th>
-                        <th>SKU</th>
-                        <th>Price</th>
-                        <th>Type</th>
-                        <th style="width:140px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($items as $item): ?>
-                    <tr>
-                        <td>
-                            <?php if (!empty($item['image_url'])): ?>
-                                <img src="<?= htmlspecialchars($item['image_url']) ?>" alt="" style="width:60px;height:60px;object-fit:cover;border-radius:4px;">
-                            <?php else: ?>
-                                <span class="text-muted">—</span>
-                            <?php endif; ?>
-                        </td>
-                        <td><?= htmlspecialchars($item['item_name']) ?></td>
-                        <td><?= htmlspecialchars($item['sku'] ?? '—') ?></td>
-                        <td>$<?= number_format($item['price'] ?? 0, 2) ?></td>
-                        <td><?= htmlspecialchars($item['item_type'] ?? 'general') ?></td>
-                        <td>
-                            <button class="btn btn-sm btn-primary me-1">Edit</button>
-                            <button class="btn btn-sm btn-danger">Delete</button>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+    <!-- Add new item form -->
+    <div class="card mb-5">
+        <div class="card-header">Add New Catalog Item</div>
+        <div class="card-body">
+            <form method="post">
+                <input type="hidden" name="action" value="add_item">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label">Item Name</label>
+                        <input type="text" name="item_name" class="form-control" required>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Description</label>
+                        <input type="text" name="description" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" step="0.01" name="price" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Add to Catalog</button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <!-- Catalog table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Description</th>
+                            <th>Price</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($catalog_items as $item): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($item['item_name']) ?></td>
+                            <td><?= htmlspecialchars($item['description'] ?? '') ?></td>
+                            <td>$<?= number_format($item['price'], 2) ?></td>
+                            <td><button class="btn btn-sm btn-outline-danger">Delete</button></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="vendor_dashboard.php" class="btn btn-secondary">← Back to Vendor Dashboard</a>
+    </div>
+</div>
+
+<?php require_once 'footer.php'; ?>
