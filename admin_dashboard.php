@@ -1,5 +1,5 @@
 <?php
-// admin_dashboard.php – Fixed pending vendor query (no created_at) – 2026-05-11
+// admin_dashboard.php – Full version with All Active Vendors list – 2026-05-11
 $page_title = "Super Admin Dashboard - Resupply Rocket";
 require_once 'header.php';
 
@@ -21,13 +21,21 @@ $total_orders      = $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn() ?
 $pending_approvals = $pdo->query("SELECT COUNT(*) FROM users WHERE approval_status = 'pending'")->fetchColumn() ?? 0;
 $total_vendors     = $pdo->query("SELECT COUNT(*) FROM users WHERE is_organization_admin = 1")->fetchColumn() ?? 0;
 
-// Pending vendor applications (using only existing columns)
+// Pending vendor applications
 $stmt = $pdo->prepare("SELECT id, first_name, last_name, email 
                        FROM users 
                        WHERE is_organization_admin = 1 AND approval_status = 'pending' 
                        ORDER BY id DESC");
 $stmt->execute();
 $pending_vendors = $stmt->fetchAll();
+
+// ALL ACTIVE VENDORS (new section)
+$stmt = $pdo->prepare("SELECT id, first_name, last_name, email, approval_status 
+                       FROM users 
+                       WHERE is_organization_admin = 1 AND approval_status = 'approved' 
+                       ORDER BY id DESC");
+$stmt->execute();
+$active_vendors = $stmt->fetchAll();
 ?>
 
 <div class="container mt-4">
@@ -104,6 +112,39 @@ $pending_vendors = $stmt->fetchAll();
                                 <td>
                                     <a href="approve_vendor.php?id=<?= $v['id'] ?>" class="btn btn-success btn-sm">Approve</a>
                                 </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- ALL ACTIVE VENDORS (new section) -->
+    <div class="card mb-5">
+        <div class="card-header bg-success text-white">
+            <h5>All Active Vendors (<?= count($active_vendors) ?>)</h5>
+        </div>
+        <div class="card-body">
+            <?php if (empty($active_vendors)): ?>
+                <p class="text-muted">No active vendors yet.</p>
+            <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($active_vendors as $v): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($v['first_name'] . ' ' . $v['last_name']) ?></td>
+                                <td><?= htmlspecialchars($v['email']) ?></td>
+                                <td><span class="badge bg-success">Approved</span></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
