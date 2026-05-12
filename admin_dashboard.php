@@ -1,5 +1,5 @@
 <?php
-// admin_dashboard.php – Bulletproof full version (fixed blank page) – 2026-05-11
+// admin_dashboard.php – Fixed pending vendor query (no created_at) – 2026-05-11
 $page_title = "Super Admin Dashboard - Resupply Rocket";
 require_once 'header.php';
 
@@ -9,32 +9,25 @@ if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
     exit;
 }
 
-// Debug info (visible only to super admin)
+// Debug info
 echo '<div class="container mt-3"><div class="alert alert-info small">';
 echo 'DEBUG: You are logged in as Super Admin (user_id = ' . $_SESSION['user_id'] . ')';
 echo '</div></div>';
 
-// Safe stats with fallbacks
-try {
-    $total_users       = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn() ?? 0;
-    $total_orgs        = $pdo->query("SELECT COUNT(*) FROM organizations")->fetchColumn() ?? 0;
-    $total_orders      = $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn() ?? 0;
-    $pending_approvals = $pdo->query("SELECT COUNT(*) FROM users WHERE approval_status = 'pending'")->fetchColumn() ?? 0;
-    $total_vendors     = $pdo->query("SELECT COUNT(*) FROM users WHERE is_organization_admin = 1")->fetchColumn() ?? 0;
-} catch (Exception $e) {
-    $total_users = $total_orgs = $total_orders = $pending_approvals = $total_vendors = 0;
-}
+// Safe stats
+$total_users       = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn() ?? 0;
+$total_orgs        = $pdo->query("SELECT COUNT(*) FROM organizations")->fetchColumn() ?? 0;
+$total_orders      = $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn() ?? 0;
+$pending_approvals = $pdo->query("SELECT COUNT(*) FROM users WHERE approval_status = 'pending'")->fetchColumn() ?? 0;
+$total_vendors     = $pdo->query("SELECT COUNT(*) FROM users WHERE is_organization_admin = 1")->fetchColumn() ?? 0;
 
-// Pending vendor applications
-try {
-    $stmt = $pdo->query("SELECT id, first_name, last_name, email, created_at 
-                         FROM users 
-                         WHERE is_organization_admin = 1 AND approval_status = 'pending' 
-                         ORDER BY created_at DESC");
-    $pending_vendors = $stmt->fetchAll();
-} catch (Exception $e) {
-    $pending_vendors = [];
-}
+// Pending vendor applications (using only existing columns)
+$stmt = $pdo->prepare("SELECT id, first_name, last_name, email 
+                       FROM users 
+                       WHERE is_organization_admin = 1 AND approval_status = 'pending' 
+                       ORDER BY id DESC");
+$stmt->execute();
+$pending_vendors = $stmt->fetchAll();
 ?>
 
 <div class="container mt-4">
@@ -100,7 +93,6 @@ try {
                             <tr>
                                 <th>Name</th>
                                 <th>Email</th>
-                                <th>Applied On</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -109,7 +101,6 @@ try {
                             <tr>
                                 <td><?= htmlspecialchars($v['first_name'] . ' ' . $v['last_name']) ?></td>
                                 <td><?= htmlspecialchars($v['email']) ?></td>
-                                <td><?= date('M j, Y g:i A', strtotime($v['created_at'])) ?></td>
                                 <td>
                                     <a href="approve_vendor.php?id=<?= $v['id'] ?>" class="btn btn-success btn-sm">Approve</a>
                                 </td>
