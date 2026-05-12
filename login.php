@@ -1,5 +1,5 @@
 <?php
-// login.php – Updated with vendor_id session for isolation – 2026-05-11
+// login.php – Full expanded version with vendor_id session for isolation – 2026-05-11
 $page_title = "Login - Resupply Rocket";
 require_once 'header.php';
 
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['is_admin'] = $user['is_admin'];
                 $_SESSION['is_organization_admin'] = $user['is_organization_admin'] ?? 0;
                 $_SESSION['organization_id'] = $user['organization_id'];
-                $_SESSION['vendor_id'] = $user['vendor_id'] ?? $user['organization_id']; // fallback for isolation
+                $_SESSION['vendor_id'] = $user['vendor_id'] ?? null;
                 $_SESSION['is_propane'] = $user['is_propane'];
 
                 $redirect = $user['is_admin'] ? 'admin_dashboard.php' : 
