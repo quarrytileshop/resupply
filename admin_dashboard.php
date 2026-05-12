@@ -1,5 +1,5 @@
 <?php
-// admin_dashboard.php – Full version with All Active Vendors list – 2026-05-11
+// admin_dashboard.php – Added Edit & Delete buttons for Active Vendors – 2026-05-12
 $page_title = "Super Admin Dashboard - Resupply Rocket";
 require_once 'header.php';
 
@@ -29,7 +29,7 @@ $stmt = $pdo->prepare("SELECT id, first_name, last_name, email
 $stmt->execute();
 $pending_vendors = $stmt->fetchAll();
 
-// ALL ACTIVE VENDORS (new section)
+// ALL ACTIVE VENDORS
 $stmt = $pdo->prepare("SELECT id, first_name, last_name, email, approval_status 
                        FROM users 
                        WHERE is_organization_admin = 1 AND approval_status = 'approved' 
@@ -121,7 +121,7 @@ $active_vendors = $stmt->fetchAll();
         </div>
     </div>
 
-    <!-- ALL ACTIVE VENDORS (new section) -->
+    <!-- ALL ACTIVE VENDORS (with Edit & Delete buttons) -->
     <div class="card mb-5">
         <div class="card-header bg-success text-white">
             <h5>All Active Vendors (<?= count($active_vendors) ?>)</h5>
@@ -136,7 +136,7 @@ $active_vendors = $stmt->fetchAll();
                             <tr>
                                 <th>Name</th>
                                 <th>Email</th>
-                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -144,7 +144,10 @@ $active_vendors = $stmt->fetchAll();
                             <tr>
                                 <td><?= htmlspecialchars($v['first_name'] . ' ' . $v['last_name']) ?></td>
                                 <td><?= htmlspecialchars($v['email']) ?></td>
-                                <td><span class="badge bg-success">Approved</span></td>
+                                <td>
+                                    <a href="admin_edit_vendor.php?id=<?= $v['id'] ?>" class="btn btn-primary btn-sm">Edit</a>
+                                    <a href="admin_delete_vendor.php?id=<?= $v['id'] ?>" onclick="return confirm('Delete this vendor and all their data? This cannot be undone!')" class="btn btn-danger btn-sm">Delete</a>
+                                </td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
