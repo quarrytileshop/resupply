@@ -1,5 +1,5 @@
 <?php
-// save_shopping_list.php – Updated with vendor_id isolation – 2026-05-11
+// save_shopping_list.php – Full expanded version with vendor_id isolation – 2026-05-11
 require_once 'config.php';
 session_start();
 
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             echo json_encode(['success' => true, 'message' => 'Shopping list saved successfully!']);
         } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Database error']);
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
         }
     } else {
         echo json_encode(['success' => false, 'message' => 'Missing required fields']);
