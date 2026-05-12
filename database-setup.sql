@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 08, 2026 at 04:13 PM
+-- Generation Time: May 12, 2026 at 02:22 AM
 -- Server version: 10.6.24-MariaDB-cll-lve
 -- PHP Version: 8.4.20
 
@@ -263,6 +263,22 @@ CREATE TABLE `messages` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `monthly_usage`
+--
+
+CREATE TABLE `monthly_usage` (
+  `id` int(11) NOT NULL,
+  `organization_id` int(11) NOT NULL,
+  `vendor_id` int(11) NOT NULL,
+  `usage_month` date NOT NULL,
+  `orders_count` int(11) DEFAULT 0,
+  `checkbox_uses` int(11) DEFAULT 0,
+  `last_activity` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `orders`
 --
 
@@ -307,6 +323,7 @@ CREATE TABLE `order_items` (
 
 CREATE TABLE `organizations` (
   `id` int(11) NOT NULL,
+  `vendor_id` int(11) DEFAULT NULL,
   `name` varchar(255) NOT NULL,
   `address` varchar(255) DEFAULT NULL,
   `contact_name` varchar(255) DEFAULT NULL,
@@ -328,8 +345,8 @@ CREATE TABLE `organizations` (
 -- Dumping data for table `organizations`
 --
 
-INSERT INTO `organizations` (`id`, `name`, `address`, `contact_name`, `contact_email`, `mailing_address`, `account_number`, `type`, `resale_number`, `authorized_people`, `credit_card_contact`, `approval_status`, `created_at`, `suspended`, `wholesale`, `is_propane`) VALUES
-(17, 'Holstein Testing', '1', 'Rusty', 'trenchantman@gmail.com', '1', '3333', 'retail', '', NULL, 0, 'approved', '2026-05-08 22:39:40', 0, 0, 0);
+INSERT INTO `organizations` (`id`, `vendor_id`, `name`, `address`, `contact_name`, `contact_email`, `mailing_address`, `account_number`, `type`, `resale_number`, `authorized_people`, `credit_card_contact`, `approval_status`, `created_at`, `suspended`, `wholesale`, `is_propane`) VALUES
+(18, 36, 'Russellshoots', NULL, NULL, NULL, NULL, NULL, 'retail', NULL, NULL, 0, 'approved', '2026-05-12 07:26:20', 0, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -374,6 +391,7 @@ INSERT INTO `password_resets` (`id`, `user_id`, `token`, `expires_at`, `used`, `
 
 CREATE TABLE `shopping_lists` (
   `id` int(11) NOT NULL,
+  `vendor_id` int(11) DEFAULT NULL,
   `organization_id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -401,6 +419,7 @@ CREATE TABLE `shopping_list_items` (
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `organization_id` int(11) DEFAULT NULL,
+  `vendor_id` int(11) DEFAULT NULL,
   `username` varchar(50) NOT NULL,
   `first_name` varchar(255) DEFAULT NULL,
   `last_name` varchar(255) DEFAULT NULL,
@@ -428,9 +447,9 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `organization_id`, `username`, `first_name`, `last_name`, `email`, `password`, `is_admin`, `is_wholesale`, `resale_number`, `certificate_url`, `approval_status`, `registration_type`, `phone_number`, `business_name`, `is_propane`, `account_number`, `delivery_address`, `access_notes`, `password_hash`, `suspended`, `resale_certificate_url`, `is_organization_admin`) VALUES
-(30, NULL, 'Russell Admin', 'Russell', 'Houlston', 'russellhb2b@gmail.com', '4809d4c3becd777da963e06f1d5f2a74', 1, 0, '', NULL, 'approved', NULL, NULL, NULL, 0, NULL, NULL, NULL, '$2y$10$5p5e7B3K0R385mOe.5so.e4T1zujauivgc76Pdrj5O4hooRIHUFAe', 0, NULL, 1),
-(35, 17, 'Rusty Houlston', 'Rusty', 'Houlston', 'trenchantman@gmail.com', '', 0, 0, NULL, NULL, 'approved', NULL, '', NULL, 0, NULL, NULL, NULL, '$2y$10$OVtuH9F8eoqRX64v.5m9JO0ZEF7CMnNsz5dadbgIZ6F1FVGEXhyve', 0, NULL, 0);
+INSERT INTO `users` (`id`, `organization_id`, `vendor_id`, `username`, `first_name`, `last_name`, `email`, `password`, `is_admin`, `is_wholesale`, `resale_number`, `certificate_url`, `approval_status`, `registration_type`, `phone_number`, `business_name`, `is_propane`, `account_number`, `delivery_address`, `access_notes`, `password_hash`, `suspended`, `resale_certificate_url`, `is_organization_admin`) VALUES
+(30, NULL, NULL, 'Russell Admin', 'Russell', 'Houlston', 'russellhb2b@gmail.com', '4809d4c3becd777da963e06f1d5f2a74', 1, 0, '', NULL, 'approved', NULL, NULL, NULL, 0, NULL, NULL, NULL, '$2y$10$5p5e7B3K0R385mOe.5so.e4T1zujauivgc76Pdrj5O4hooRIHUFAe', 0, NULL, 1),
+(36, NULL, 36, '', 'Russ', 'Shoots', 'russellshoots@gmail.com', '', 0, 0, NULL, NULL, 'approved', NULL, NULL, NULL, 0, NULL, NULL, NULL, '$2y$10$hDcfTRpp6iQ64vaqqioMOOe8dTsnXesua6chqsxLQBMyO/bn3LlBe', 0, NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -522,6 +541,14 @@ ALTER TABLE `messages`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `monthly_usage`
+--
+ALTER TABLE `monthly_usage`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_month_org` (`organization_id`,`usage_month`),
+  ADD KEY `idx_vendor_month` (`vendor_id`,`usage_month`);
+
+--
 -- Indexes for table `orders`
 --
 ALTER TABLE `orders`
@@ -540,7 +567,8 @@ ALTER TABLE `order_items`
 -- Indexes for table `organizations`
 --
 ALTER TABLE `organizations`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_vendor_id` (`vendor_id`);
 
 --
 -- Indexes for table `organization_item_overrides`
@@ -563,7 +591,8 @@ ALTER TABLE `password_resets`
 --
 ALTER TABLE `shopping_lists`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_shopping_lists_organization` (`organization_id`);
+  ADD KEY `fk_shopping_lists_organization` (`organization_id`),
+  ADD KEY `idx_vendor_id` (`vendor_id`);
 
 --
 -- Indexes for table `shopping_list_items`
@@ -580,7 +609,8 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `username` (`username`),
   ADD UNIQUE KEY `email` (`email`),
   ADD KEY `company_id` (`organization_id`),
-  ADD KEY `organization_id` (`organization_id`);
+  ADD KEY `organization_id` (`organization_id`),
+  ADD KEY `idx_vendor_id` (`vendor_id`);
 
 --
 -- Indexes for table `user_folders`
@@ -645,6 +675,12 @@ ALTER TABLE `messages`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `monthly_usage`
+--
+ALTER TABLE `monthly_usage`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
@@ -660,7 +696,7 @@ ALTER TABLE `order_items`
 -- AUTO_INCREMENT for table `organizations`
 --
 ALTER TABLE `organizations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `organization_item_overrides`
@@ -684,7 +720,7 @@ ALTER TABLE `shopping_lists`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `user_folders`
