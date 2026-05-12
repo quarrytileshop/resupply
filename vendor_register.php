@@ -1,5 +1,5 @@
 <?php
-// vendor_register.php – Updated with billing fields (billing switched OFF) – 2026-05-12
+// vendor_register.php – Fixed self-assignment of vendor_id – 2026-05-12
 $page_title = "Register as Vendor - Resupply Rocket";
 require_once 'header.php';
 
@@ -35,7 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $new_vendor_id = $pdo->lastInsertId();
 
-            // Create default organization for this vendor
+            // CRITICAL FIX: Set vendor_id = its own user id
+            $stmt = $pdo->prepare("UPDATE users SET vendor_id = :vendor_id WHERE id = :id");
+            $stmt->execute(['vendor_id' => $new_vendor_id, 'id' => $new_vendor_id]);
+
+            // Create default organization
             $stmt = $pdo->prepare("INSERT INTO organizations (name, vendor_id, approval_status) 
                                   VALUES (:name, :vendor_id, 'approved')");
             $stmt->execute(['name' => $company_name, 'vendor_id' => $new_vendor_id]);
@@ -83,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Billing Email (for invoices)</label>
-                                <input type="email" name="billing_email" class="form-control" value="<?= htmlspecialchars($billing_email ?? '') ?>">
+                                <input type="email" name="billing_email" class="form-control">
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Password</label>
