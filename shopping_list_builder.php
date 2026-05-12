@@ -1,5 +1,5 @@
 <?php
-// shopping_list_builder.php – Updated with vendor_id isolation – 2026-05-11
+// shopping_list_builder.php – Full expanded version with vendor_id isolation – 2026-05-11
 $page_title = "Shopping List Builder - Resupply Rocket";
 require_once 'header.php';
 
@@ -15,7 +15,7 @@ $stmt = $pdo->prepare("SELECT id, name FROM organizations WHERE approval_status 
 $stmt->execute(['vendor_id' => $vendor_id]);
 $customer_orgs = $stmt->fetchAll();
 
-// Fetch catalog items (already scoped by vendor_id in DB)
+// Fetch catalog items (scoped to this vendor)
 $stmt = $pdo->prepare("SELECT id, item_name, description, price FROM catalog_items WHERE vendor_id = :vendor_id OR vendor_id IS NULL ORDER BY item_name");
 $stmt->execute(['vendor_id' => $vendor_id]);
 $catalog_items = $stmt->fetchAll();
@@ -43,7 +43,7 @@ $catalog_items = $stmt->fetchAll();
                     <input type="text" id="listName" class="form-control" placeholder="e.g. Monthly Restock - May 2026" required>
                 </div>
 
-                <h5 class="mb-3">Available Catalog Items</h5>
+                <h5 class="mb-3">Available Catalog Items <small class="text-muted">(click to select)</small></h5>
                 <div class="row g-3" id="catalogGrid">
                     <?php foreach ($catalog_items as $item): ?>
                     <div class="col-md-4">
@@ -68,10 +68,63 @@ $catalog_items = $stmt->fetchAll();
 </div>
 
 <script>
-// Same JS as before (unchanged)
 let selectedItems = [];
-function toggleItem(el, itemId) { /* ... same as previous version ... */ }
-function saveShoppingList() { /* ... same AJAX call ... */ }
+
+function toggleItem(el, itemId) {
+    if (selectedItems.includes(itemId)) {
+        selectedItems = selectedItems.filter(id => id !== itemId);
+        el.classList.remove('border-primary', 'border-3');
+    } else {
+        selectedItems.push(itemId);
+        el.classList.add('border-primary', 'border-3');
+    }
+}
+
+function saveShoppingList() {
+    const orgId = document.getElementById('orgSelect').value;
+    const listName = document.getElementById('listName').value.trim();
+
+    if (!orgId || !listName) {
+        alert("Please select an organization and enter a list name.");
+        return;
+    }
+    if (selectedItems.length === 0) {
+        alert("Please select at least one catalog item.");
+        return;
+    }
+
+    const btn = document.querySelector('.send-it-btn');
+    btn.classList.add('sending');
+    btn.innerHTML = '🚀 SAVING...';
+
+    const formData = new FormData();
+    formData.append('org_id', orgId);
+    formData.append('list_name', listName);
+    selectedItems.forEach(id => formData.append('item_ids[]', id));
+
+    fetch('save_shopping_list.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            btn.innerHTML = `✅ ${data.message}`;
+            setTimeout(() => {
+                window.location.href = 'vendor_dashboard.php';
+            }, 1500);
+        } else {
+            alert(data.message);
+            btn.classList.remove('sending');
+            btn.innerHTML = `<img src="icons/logo-192.png" alt="Rocket" class="logo-img"> SAVE SHOPPING LIST`;
+        }
+    })
+    .catch(() => {
+        alert('Error saving list. Please try again.');
+        btn.classList.remove('sending');
+        btn.innerHTML = `<img src="icons/logo-192.png" alt="Rocket" class="logo-img"> SAVE SHOPPING LIST`;
+    });
+}
 </script>
 
 <?php require_once 'footer.php'; ?>
