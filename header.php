@@ -1,5 +1,5 @@
 <?php
-// header.php – Updated for multi-vendor role-based nav – 2026-05-11
+// header.php – Final multi-vendor navigation update – 2026-05-11
 require_once 'config.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -49,13 +49,15 @@ if (isset($_SESSION['user_id'])) {
                     <?php if (isset($_SESSION['is_organization_admin']) && $_SESSION['is_organization_admin']): ?>
                         <!-- Vendor Admin Navigation -->
                         <li class="nav-item"><a class="nav-link <?php echo $current_page === 'vendor_dashboard.php' ? 'active' : ''; ?>" href="vendor_dashboard.php">Vendor Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="shopping_list_builder.php">Shopping Lists</a></li>
+                        <li class="nav-item"><a class="nav-link <?php echo $current_page === 'shopping_list_builder.php' ? 'active' : ''; ?>" href="shopping_list_builder.php">Build Lists</a></li>
+                        <li class="nav-item"><a class="nav-link <?php echo $current_page === 'vendor_shopping_lists.php' ? 'active' : ''; ?>" href="vendor_shopping_lists.php">My Lists</a></li>
                         <li class="nav-item"><a class="nav-link" href="vendor_organizations.php">My Customers</a></li>
                     <?php else: ?>
                         <!-- Regular User Navigation -->
                         <li class="nav-item"><a class="nav-link <?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>" href="dashboard.php">Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link <?php echo $current_page === 'order.php' ? 'active' : ''; ?>" href="order.php">New Order</a></li>
                         <li class="nav-item"><a class="nav-link <?php echo $current_page === 'history.php' ? 'active' : ''; ?>" href="history.php">History</a></li>
+                        <li class="nav-item"><a class="nav-link" href="shopping_lists.php">My Shopping Lists</a></li>
                     <?php endif; ?>
 
                     <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
@@ -66,7 +68,7 @@ if (isset($_SESSION['user_id'])) {
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                             <span class="me-2"><?= htmlspecialchars($user_info['first_name']) ?></span>
-                            <small class="text-teal"><?= htmlspecialchars($user_info['organization_name'] ?? 'Vendor Admin') ?></small>
+                            <small class="text-teal"><?= htmlspecialchars($user_info['organization_name'] ?? 'Vendor') ?></small>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="profile.php">Profile</a></li>
