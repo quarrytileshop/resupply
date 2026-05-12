@@ -1,5 +1,5 @@
 <?php
-// vendor_register.php – Public vendor self-signup with pending approval – 2026-05-11
+// vendor_register.php – Updated with billing fields (billing switched OFF) – 2026-05-12
 $page_title = "Register as Vendor - Resupply Rocket";
 require_once 'header.php';
 
@@ -7,11 +7,12 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $first_name   = trim($_POST['first_name'] ?? '');
-    $last_name    = trim($_POST['last_name'] ?? '');
-    $email        = trim($_POST['email'] ?? '');
-    $password     = $_POST['password'] ?? '';
-    $company_name = trim($_POST['company_name'] ?? '');
+    $first_name     = trim($_POST['first_name'] ?? '');
+    $last_name      = trim($_POST['last_name'] ?? '');
+    $email          = trim($_POST['email'] ?? '');
+    $password       = $_POST['password'] ?? '';
+    $company_name   = trim($_POST['company_name'] ?? '');
+    $billing_email  = trim($_POST['billing_email'] ?? $email);
 
     if ($first_name && $last_name && $email && $password && $company_name) {
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email");
@@ -22,13 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
             $stmt = $pdo->prepare("INSERT INTO users 
-                (first_name, last_name, email, password_hash, is_organization_admin, approval_status) 
-                VALUES (:first_name, :last_name, :email, :password_hash, 1, 'pending')");
+                (first_name, last_name, email, password_hash, is_organization_admin, approval_status, billing_email) 
+                VALUES (:first_name, :last_name, :email, :password_hash, 1, 'pending', :billing_email)");
             $stmt->execute([
                 'first_name'    => $first_name,
                 'last_name'     => $last_name,
                 'email'         => $email,
-                'password_hash' => $password_hash
+                'password_hash' => $password_hash,
+                'billing_email' => $billing_email
             ]);
 
             $new_vendor_id = $pdo->lastInsertId();
@@ -78,6 +80,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="col-12">
                                 <label class="form-label">Business Email</label>
                                 <input type="email" name="email" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Billing Email (for invoices)</label>
+                                <input type="email" name="billing_email" class="form-control" value="<?= htmlspecialchars($billing_email ?? '') ?>">
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Password</label>
