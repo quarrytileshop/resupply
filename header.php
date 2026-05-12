@@ -1,21 +1,20 @@
 <?php
-// header.php – Professional reusable header – Created 2026-05-11
+// header.php – Updated for multi-vendor role-based nav – 2026-05-11
 require_once 'config.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Redirect if not logged in (except login/register pages)
 $current_page = basename($_SERVER['PHP_SELF']);
+
 if (!isset($_SESSION['user_id']) && $current_page !== 'login.php' && $current_page !== 'register.php' && $current_page !== 'forgot_password.php') {
     header("Location: login.php");
     exit;
 }
 
-// Get user info for display
 $user_info = null;
 if (isset($_SESSION['user_id'])) {
-    $stmt = $pdo->prepare("SELECT u.first_name, u.last_name, u.is_admin, o.name as organization_name 
+    $stmt = $pdo->prepare("SELECT u.first_name, u.last_name, u.is_admin, u.is_organization_admin, o.name as organization_name 
                            FROM users u 
                            LEFT JOIN organizations o ON u.organization_id = o.id 
                            WHERE u.id = :id");
@@ -34,10 +33,9 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="bg-light">
-    <!-- Modern Professional Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark" style="background: var(--navy); box-shadow: 0 4px 12px rgba(10, 37, 64, 0.3);">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="dashboard.php">
+            <a class="navbar-brand d-flex align-items-center" href="<?php echo isset($_SESSION['is_organization_admin']) && $_SESSION['is_organization_admin'] ? 'vendor_dashboard.php' : 'dashboard.php'; ?>">
                 <img src="icons/logo-192.png" alt="Resupply Rocket" style="max-height: 38px; margin-right: 10px;">
                 <span class="fw-bold fs-4">Resupply Rocket</span>
             </a>
@@ -48,20 +46,27 @@ if (isset($_SESSION['user_id'])) {
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item"><a class="nav-link <?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>" href="dashboard.php">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link <?php echo $current_page === 'order.php' ? 'active' : ''; ?>" href="order.php">New Order</a></li>
-                    <li class="nav-item"><a class="nav-link <?php echo $current_page === 'history.php' ? 'active' : ''; ?>" href="history.php">History</a></li>
-                    
-                    <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
-                    <li class="nav-item"><a class="nav-link" href="admin_dashboard.php">Admin</a></li>
+                    <?php if (isset($_SESSION['is_organization_admin']) && $_SESSION['is_organization_admin']): ?>
+                        <!-- Vendor Admin Navigation -->
+                        <li class="nav-item"><a class="nav-link <?php echo $current_page === 'vendor_dashboard.php' ? 'active' : ''; ?>" href="vendor_dashboard.php">Vendor Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="shopping_list_builder.php">Shopping Lists</a></li>
+                        <li class="nav-item"><a class="nav-link" href="vendor_organizations.php">My Customers</a></li>
+                    <?php else: ?>
+                        <!-- Regular User Navigation -->
+                        <li class="nav-item"><a class="nav-link <?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>" href="dashboard.php">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link <?php echo $current_page === 'order.php' ? 'active' : ''; ?>" href="order.php">New Order</a></li>
+                        <li class="nav-item"><a class="nav-link <?php echo $current_page === 'history.php' ? 'active' : ''; ?>" href="history.php">History</a></li>
                     <?php endif; ?>
 
-                    <!-- User dropdown -->
+                    <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
+                        <li class="nav-item"><a class="nav-link" href="admin_dashboard.php">Super Admin</a></li>
+                    <?php endif; ?>
+
                     <?php if ($user_info): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                             <span class="me-2"><?= htmlspecialchars($user_info['first_name']) ?></span>
-                            <small class="text-teal"><?= htmlspecialchars($user_info['organization_name'] ?? '') ?></small>
+                            <small class="text-teal"><?= htmlspecialchars($user_info['organization_name'] ?? 'Vendor Admin') ?></small>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="profile.php">Profile</a></li>
