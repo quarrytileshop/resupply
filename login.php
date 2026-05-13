@@ -1,5 +1,5 @@
 <?php
-// login.php – Full expanded version with vendor_id session for isolation – 2026-05-11
+// login.php – Added dedicated is_vendor_admin support for clear role separation – 2026-05-12
 $page_title = "Login - Resupply Rocket";
 require_once 'header.php';
 
@@ -27,13 +27,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['first_name'] = $user['first_name'];
                 $_SESSION['is_admin'] = $user['is_admin'];
+                $_SESSION['is_vendor_admin'] = (int)($user['is_vendor_admin'] ?? 0);
                 $_SESSION['is_organization_admin'] = $user['is_organization_admin'] ?? 0;
                 $_SESSION['organization_id'] = $user['organization_id'];
                 $_SESSION['vendor_id'] = $user['vendor_id'] ?? null;
                 $_SESSION['is_propane'] = $user['is_propane'];
 
-                $redirect = $user['is_admin'] ? 'admin_dashboard.php' : 
-                           ($user['is_organization_admin'] ? 'vendor_dashboard.php' : 'dashboard.php');
+                // Clear, mutually-exclusive role priority (Super > Vendor > Org > User)
+                if ($user['is_admin']) {
+                    $redirect = 'admin_dashboard.php';
+                } elseif ($user['is_vendor_admin']) {
+                    $redirect = 'vendor_dashboard.php';
+                } elseif ($user['is_organization_admin']) {
+                    $redirect = 'organization_admin.php';
+                } else {
+                    $redirect = 'dashboard.php';
+                }
                 header("Location: $redirect");
                 exit;
             }
