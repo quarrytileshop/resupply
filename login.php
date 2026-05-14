@@ -2,8 +2,9 @@
 /**
  * resupply - Login Page
  * Updated for new folder structure (May 14, 2026)
- * All includes and asset paths updated
- * Logo now uses root-relative path to eliminate 404
+ * Simplified clean layout with full-height centered card
+ * No extra containers, no strange background formatting behind the dialog
+ * Uses Bootstrap full-screen flex centering for a modern, minimal look
  */
 
 $page_title = "Login - Resupply Rocket";
@@ -39,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['vendor_id'] = $user['vendor_id'] ?? null;
                 $_SESSION['is_propane'] = $user['is_propane'];
 
-                // Clear, mutually-exclusive role priority (Super > Vendor > Org > User)
+                // Clear, mutually-exclusive role priority
                 if ($user['is_admin']) {
                     $redirect = 'admin/admin_dashboard.php';
                 } elseif ($user['is_vendor_admin']) {
@@ -61,36 +62,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body p-5">
-                    <!-- Root-relative path fixes the 404 -->
-                    <img src="/assets/icons/logo-192.png" alt="Logo" class="mx-auto d-block mb-4" style="max-width:150px;">
-                    <h2 class="text-center mb-4">Login</h2>
+<!-- Clean full-screen centered layout - no strange background/formatting issues -->
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light py-5">
+    <div class="card shadow-sm" style="width: 100%; max-width: 420px;">
+        <div class="card-body p-5">
+            <!-- Rocket logo -->
+            <img src="/assets/icons/logo-192.png" alt="Resupply Rocket" class="mx-auto d-block mb-4" style="max-width: 180px;">
+            
+            <h2 class="text-center mb-4 fw-bold">Login</h2>
 
-                    <?php if ($error): ?>
-                        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-                    <?php endif; ?>
+            <?php if ($error): ?>
+                <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+            <?php endif; ?>
 
-                    <form method="post">
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Login</button>
-                    </form>
-
-                    <div class="text-center mt-3">
-                        <a href="register.php">Register New Account</a> | 
-                        <a href="forgot_password.php">Forgot Password?</a>
-                    </div>
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control form-control-lg" required>
                 </div>
+                <div class="mb-4">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control form-control-lg" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg w-100">Login</button>
+            </form>
+
+            <div class="text-center mt-4">
+                <a href="register.php" class="text-decoration-none">Register New Account</a> | 
+                <a href="forgot_password.php" class="text-decoration-none">Forgot Password?</a>
             </div>
         </div>
     </div>

@@ -4,9 +4,11 @@
  * Updated for new folder structure (May 14, 2026)
  * Favicon points to logo-192.png
  * Navigation now ONLY shows for logged-in users
+ * Container wrapper is now CONDITIONAL (public pages like login get their own clean full-screen layout)
+ * Bootstrap 5.3 CDN included for proper styling
  */
 
-require_once 'includes/config.php';   // Fixed path
+require_once 'includes/config.php';
 
 // Redirect non-logged-in users away from protected pages
 if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php' 
@@ -26,11 +28,14 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php'
     <meta name="description" content="Quarry Tile Shop Resupply Portal">
     <title><?= SITE_NAME ?> - <?= isset($page_title) ? $page_title : 'Resupply Rocket' ?></title>
     
-    <!-- Favicon pointing to logo-192 -->
+    <!-- Favicon pointing to logo-192 (as requested) -->
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/logo-192.png">
     <link rel="apple-touch-icon" href="/assets/icons/logo-192.png">
     
-    <!-- Styles -->
+    <!-- Bootstrap 5.3 CSS CDN - REQUIRED for clean cards, forms, centering -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    
+    <!-- Custom styles -->
     <link rel="stylesheet" href="/assets/css/styles.css">
     
     <!-- Manifest for PWA -->
@@ -106,12 +111,16 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php'
             </div>
         </div>
     </nav>
+    
+    <!-- Logged-in pages get normal container -->
+    <div class="container mt-4">
+<?php else: ?>
+    <!-- Public pages (login, register, etc.) get their own clean full-screen layout - no extra container -->
 <?php endif; ?>
 
-<div class="container mt-4">
 <?php
-// Global messages
-if (isset($_SESSION['message'])) {
+// Global messages (only show for logged-in users)
+if (isset($_SESSION['message']) && is_logged_in()) {
     echo '<div class="alert alert-success alert-dismissible fade show" role="alert">';
     echo htmlspecialchars($_SESSION['message']);
     echo '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
