@@ -3,6 +3,7 @@
  * resupply - Login Page
  * Updated for new folder structure (May 14, 2026)
  * All includes and asset paths updated
+ * Logo now uses root-relative path to eliminate 404
  */
 
 $page_title = "Login - Resupply Rocket";
@@ -65,7 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body p-5">
-                    <img src="assets/icons/logo-192.png" alt="Logo" class="mx-auto d-block mb-4" style="max-width:150px;">
+                    <!-- Root-relative path fixes the 404 -->
+                    <img src="/assets/icons/logo-192.png" alt="Logo" class="mx-auto d-block mb-4" style="max-width:150px;">
                     <h2 class="text-center mb-4">Login</h2>
 
                     <?php if ($error): ?>

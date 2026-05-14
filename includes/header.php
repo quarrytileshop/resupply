@@ -6,7 +6,7 @@
  * Navigation now ONLY shows for logged-in users
  */
 
-require_once 'includes/config.php';   // Note: updated path for safety
+require_once 'includes/config.php';   // Fixed path
 
 // Redirect non-logged-in users away from protected pages
 if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php' 
@@ -26,7 +26,7 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php'
     <meta name="description" content="Quarry Tile Shop Resupply Portal">
     <title><?= SITE_NAME ?> - <?= isset($page_title) ? $page_title : 'Resupply Rocket' ?></title>
     
-    <!-- Favicon pointing to logo-192 (as requested) -->
+    <!-- Favicon pointing to logo-192 -->
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/logo-192.png">
     <link rel="apple-touch-icon" href="/assets/icons/logo-192.png">
     
