@@ -6,9 +6,10 @@
  * Navigation now ONLY shows for logged-in users
  * Container wrapper is now CONDITIONAL (public pages like login get their own clean full-screen layout)
  * Bootstrap 5.3 CDN included for proper styling
+ * FIXED: require path for config.php (was pointing to wrong "includes/config.php")
  */
 
-require_once 'includes/config.php';
+require_once 'config.php';   // ← THIS IS THE FIX (header.php lives inside the includes/ folder)
 
 // Redirect non-logged-in users away from protected pages
 if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php' 
@@ -55,7 +56,7 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php'
     <!-- NAVIGATION ONLY FOR LOGGED-IN USERS -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="dashboard.php">
+            <a class="navbar-brand" href="../dashboard.php">   <!-- ← fixed relative path for admin subfolder -->
                 <img src="/assets/icons/logo-512.png" alt="Quarry Tile Shop" height="40">
                 Resupply
             </a>
@@ -67,28 +68,28 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php'
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <?php if (is_super_admin()): ?>
-                        <li class="nav-item"><a class="nav-link" href="admin/admin_dashboard.php">Admin Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="admin/admin_organizations.php">Organizations</a></li>
-                        <li class="nav-item"><a class="nav-link" href="admin/admin_users.php">Users</a></li>
-                        <li class="nav-item"><a class="nav-link" href="admin/admin_catalog.php">Catalog</a></li>
+                        <li class="nav-item"><a class="nav-link" href="admin_dashboard.php">Admin Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="admin_organizations.php">Organizations</a></li>
+                        <li class="nav-item"><a class="nav-link" href="admin_users.php">Users</a></li>
+                        <li class="nav-item"><a class="nav-link" href="admin_catalog.php">Catalog</a></li>
                     <?php endif; ?>
                     
                     <?php if (is_vendor()): ?>
-                        <li class="nav-item"><a class="nav-link" href="vendor/vendor_dashboard.php">Vendor Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="vendor/vendor_organizations.php">Organizations</a></li>
-                        <li class="nav-item"><a class="nav-link" href="vendor/vendor_shopping_lists.php">Shopping Lists</a></li>
+                        <li class="nav-item"><a class="nav-link" href="../vendor/vendor_dashboard.php">Vendor Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="../vendor/vendor_organizations.php">Organizations</a></li>
+                        <li class="nav-item"><a class="nav-link" href="../vendor/vendor_shopping_lists.php">Shopping Lists</a></li>
                     <?php endif; ?>
                     
                     <?php if (is_org_admin() || is_super_admin()): ?>
-                        <li class="nav-item"><a class="nav-link" href="organization_admin.php">Org Admin</a></li>
+                        <li class="nav-item"><a class="nav-link" href="../organization_admin.php">Org Admin</a></li>
                     <?php endif; ?>
                     
                     <!-- Customer links -->
-                    <li class="nav-item"><a class="nav-link" href="dashboard.php">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="shopping_lists.php">Shopping Lists</a></li>
-                    <li class="nav-item"><a class="nav-link" href="shopping_list_builder.php">Build List</a></li>
-                    <li class="nav-item"><a class="nav-link" href="orders/order.php">New Order</a></li>
-                    <li class="nav-item"><a class="nav-link" href="history.php">Order History</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../dashboard.php">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../shopping_lists.php">Shopping Lists</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../shopping_list_builder.php">Build List</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../orders/order.php">New Order</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../history.php">Order History</a></li>
                 </ul>
                 
                 <ul class="navbar-nav ms-auto">
@@ -98,13 +99,13 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php'
                             <?= htmlspecialchars($_SESSION['first_name'] ?? 'User') ?>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="edit_profile.php">Edit Profile</a></li>
-                            <li><a class="dropdown-item" href="record_usage.php">Record Usage</a></li>
+                            <li><a class="dropdown-item" href="../edit_profile.php">Edit Profile</a></li>
+                            <li><a class="dropdown-item" href="../record_usage.php">Record Usage</a></li>
                             <?php if (is_super_admin()): ?>
-                                <li><a class="dropdown-item" href="admin/admin_impersonate.php">Impersonate User</a></li>
+                                <li><a class="dropdown-item" href="admin_impersonate.php">Impersonate User</a></li>
                             <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="logout.php">Logout</a></li>
+                            <li><a class="dropdown-item text-danger" href="../logout.php">Logout</a></li>
                         </ul>
                     </li>
                 </ul>
