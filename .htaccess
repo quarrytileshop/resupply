@@ -1,34 +1,16 @@
 # =============================================
-# .htaccess - Updated for new folder structure
-# resupply - May 14, 2026
+# .htaccess - Simplified for GoDaddy shared hosting
+# Updated May 14, 2026
 # =============================================
 
-# Protect sensitive files and folders
+# Protect sensitive files
 <FilesMatch "^(includes/config\.php|database-setup\.sql|\.env|.*\.md|debug\.log)$">
     Order allow,deny
     Deny from all
 </FilesMatch>
 
-# Prevent direct access to the includes folder
-<Directory "includes">
-    Order allow,deny
-    Deny from all
-</Directory>
-
-# Optional: Prevent directory listing
+# Prevent directory listing
 Options -Indexes
-
-# Enable URL rewriting if needed in the future
-# RewriteEngine On
-# RewriteBase /
 
 # Default index file
 DirectoryIndex index.php
-
-# Set PHP error reporting (can be overridden in config.php)
-php_flag display_errors Off
-php_value error_reporting 32767
-
-# Increase upload limits if needed for bulk import
-# php_value upload_max_filesize 10M
-# php_value post_max_size 10M

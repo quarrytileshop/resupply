@@ -2,7 +2,8 @@
 /**
  * resupply - Header Include
  * Updated for new folder structure (May 14, 2026)
- * All asset paths and navigation links have been updated
+ * All asset paths and navigation links updated
+ * Favicon reference removed to prevent 404 errors
  */
 
 require_once 'config.php';
@@ -21,20 +22,16 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php' && basenam
     <meta name="description" content="Quarry Tile Shop Resupply Portal">
     <title><?= SITE_NAME ?> - <?= isset($page_title) ? $page_title : 'Dashboard' ?></title>
     
-    <!-- Favicon -->
-    <link rel="icon" href="assets/icons/favicon.ico" type="image/x-icon">
-    
     <!-- Styles -->
     <link rel="stylesheet" href="assets/css/styles.css">
     
     <!-- Manifest for PWA -->
     <link rel="manifest" href="Manifest.json">
     
-    <!-- Font Awesome (if used in original) -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        /* Any inline styles that were previously in the old header */
         .navbar { background-color: #2c3e50; }
         .nav-link { color: #ecf0f1 !important; }
         .nav-link:hover { color: #3498db !important; }
@@ -87,7 +84,7 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php' && basenam
                         </li>
                     <?php endif; ?>
                     
-                    <!-- Customer links (always visible to logged-in users) -->
+                    <!-- Customer links -->
                     <li class="nav-item">
                         <a class="nav-link" href="dashboard.php">Dashboard</a>
                     </li>
@@ -128,7 +125,7 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php' && basenam
     
     <div class="container mt-4">
 <?php
-// Any global messages or alerts can go here if needed
+// Global messages
 if (isset($_SESSION['message'])) {
     echo '<div class="alert alert-success alert-dismissible fade show" role="alert">';
     echo htmlspecialchars($_SESSION['message']);
