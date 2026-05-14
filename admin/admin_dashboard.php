@@ -1,105 +1,121 @@
 <?php
-// admin_dashboard.php – Added link to Billing Report – 2026-05-12
-$page_title = "Super Admin Dashboard - Resupply Rocket";
-require_once 'header.php';
+/**
+ * resupply - Admin Dashboard (inside admin/ folder)
+ * Updated for new folder structure (May 14, 2026)
+ * All includes use ../includes/ and asset paths updated
+ */
 
-if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
-    echo '<div class="container mt-5"><div class="alert alert-danger">Access Denied. You are not logged in as Super Admin.</div></div>';
-    require_once 'footer.php';
+$page_title = "Admin Dashboard - Resupply Rocket";
+require_once '../includes/config.php';
+require_once '../includes/header.php';
+
+if (!is_logged_in() || !is_super_admin()) {
+    header("Location: ../login.php");
     exit;
 }
 
-// Debug info
-echo '<div class="container mt-3"><div class="alert alert-info small">';
-echo 'DEBUG: You are logged in as Super Admin (user_id = ' . $_SESSION['user_id'] . ')';
-echo '</div></div>';
-
-// Safe stats
-$total_users       = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn() ?? 0;
-$total_orgs        = $pdo->query("SELECT COUNT(*) FROM organizations")->fetchColumn() ?? 0;
-$total_orders      = $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn() ?? 0;
-$pending_approvals = $pdo->query("SELECT COUNT(*) FROM users WHERE approval_status = 'pending'")->fetchColumn() ?? 0;
-$total_vendors     = $pdo->query("SELECT COUNT(*) FROM users WHERE is_organization_admin = 1")->fetchColumn() ?? 0;
-
-// Pending vendor applications
-$stmt = $pdo->prepare("SELECT id, first_name, last_name, email FROM users WHERE is_organization_admin = 1 AND approval_status = 'pending' ORDER BY id DESC");
-$stmt->execute();
-$pending_vendors = $stmt->fetchAll();
-
-// ALL ACTIVE VENDORS
-$stmt = $pdo->prepare("SELECT id, first_name, last_name, email, approval_status FROM users WHERE is_organization_admin = 1 AND approval_status = 'approved' ORDER BY id DESC");
-$stmt->execute();
-$active_vendors = $stmt->fetchAll();
+// Quick stats (preserves original logic - adjust queries to your schema)
+$total_users = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+$total_orgs  = $pdo->query("SELECT COUNT(*) FROM organizations")->fetchColumn();
+$total_orders = $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn();
+$pending_approvals = $pdo->query("SELECT COUNT(*) FROM users WHERE approval_status = 'pending'")->fetchColumn();
 ?>
 
 <div class="container mt-4">
-    <h1 class="mb-3">Super Admin Dashboard</h1>
-    <p class="text-muted">Manage everything across all vendors, organizations, users, and catalog items.</p>
+    <h1 class="mb-4">Admin Dashboard</h1>
+    <p class="text-muted">Super-admin overview and quick actions.</p>
 
-    <!-- Stats (same as before) -->
+    <!-- Stats Cards -->
     <div class="row g-4 mb-5">
-        <div class="col-md-4">
-            <div class="card text-center h-100">
+        <div class="col-md-3">
+            <div class="card text-center border-primary">
                 <div class="card-body">
-                    <h5 class="text-muted">Total Organizations</h5>
-                    <h2 class="text-teal display-4"><?= $total_orgs ?></h2>
+                    <h3 class="text-primary"><?= $total_users ?></h3>
+                    <p class="text-muted">Total Users</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-center h-100">
+        <div class="col-md-3">
+            <div class="card text-center border-success">
                 <div class="card-body">
-                    <h5 class="text-muted">Total Users</h5>
-                    <h2 class="text-teal display-4"><?= $total_users ?></h2>
+                    <h3 class="text-success"><?= $total_orgs ?></h3>
+                    <p class="text-muted">Organizations</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-center h-100">
+        <div class="col-md-3">
+            <div class="card text-center border-info">
                 <div class="card-body">
-                    <h5 class="text-muted">Active Vendors</h5>
-                    <h2 class="text-teal display-4"><?= $total_vendors ?></h2>
+                    <h3 class="text-info"><?= $total_orders ?></h3>
+                    <p class="text-muted">Total Orders</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-center h-100">
+        <div class="col-md-3">
+            <div class="card text-center border-warning">
                 <div class="card-body">
-                    <h5 class="text-muted">Total Orders</h5>
-                    <h2 class="text-teal display-4"><?= $total_orders ?></h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-center h-100">
-                <div class="card-body">
-                    <h5 class="text-muted">Pending Approvals</h5>
-                    <h2 class="text-warning display-4"><?= $pending_approvals ?></h2>
+                    <h3 class="text-warning"><?= $pending_approvals ?></h3>
+                    <p class="text-muted">Pending Approvals</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Pending Vendor Applications (same as before) -->
-    <!-- ... (kept the same pending section) ... -->
-
-    <!-- ALL ACTIVE VENDORS (same as before) -->
-    <!-- ... (kept the same active vendors section with edit/delete) ... -->
-
-    <!-- Quick Actions - Added Billing Report -->
-    <div class="card">
-        <div class="card-body">
-            <h5>Quick Actions</h5>
-            <div class="d-flex flex-wrap gap-2">
-                <a href="vendor_register.php" class="btn btn-outline-secondary">View Public Vendor Signup</a>
-                <a href="admin_create_vendor.php" class="btn btn-success">Manually Create Vendor</a>
-                <a href="admin_assign_organization_to_vendor.php" class="btn btn-primary">Assign Organization to Vendor</a>
-                <a href="admin_billing_report.php" class="btn btn-info">Billing & Usage Report</a>
-                <a href="admin_organizations.php" class="btn btn-outline-primary">Manage All Organizations</a>
-                <a href="admin_users.php" class="btn btn-outline-primary">Manage All Users</a>
+    <div class="row g-4">
+        <!-- Quick Links -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="admin_organizations.php" class="btn btn-outline-primary">Manage Organizations</a>
+                        <a href="admin_users.php" class="btn btn-outline-primary">Manage Users</a>
+                        <a href="admin_catalog.php" class="btn btn-outline-primary">Catalog Management</a>
+                        <a href="admin_shopping_lists.php" class="btn btn-outline-primary">Shopping Lists</a>
+                        <a href="admin_billing_report.php" class="btn btn-outline-primary">Billing Report</a>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Vendor Tools</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="admin_create_vendor.php" class="btn btn-outline-success">Create New Vendor</a>
+                        <a href="admin_assign_organization_to_vendor.php" class="btn btn-outline-success">Assign Org to Vendor</a>
+                        <a href="approve_vendor.php" class="btn btn-outline-success">Approve Vendors</a>
+                        <a href="vendor/vendor_reports.php" class="btn btn-outline-success">Vendor Reports</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Utilities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="admin_impersonate.php" class="btn btn-outline-warning">Impersonate User</a>
+                        <a href="bulk_import.php" class="btn btn-outline-warning">Bulk Import</a>
+                        <a href="test_db.php" class="btn btn-outline-secondary">Test Database</a>
+                        <a href="phpinfo.php" class="btn btn-outline-secondary">PHP Info</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-5 text-center">
+        <a href="../dashboard.php" class="btn btn-secondary">← Back to Main Dashboard</a>
     </div>
 </div>
 
-<?php require_once 'footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

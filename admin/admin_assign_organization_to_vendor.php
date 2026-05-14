@@ -1,45 +1,57 @@
 <?php
-// admin_assign_organization_to_vendor.php – Super Admin tool to assign organizations to vendors – 2026-05-11
-$page_title = "Assign Organization to Vendor - Resupply Rocket";
-require_once 'header.php';
+/**
+ * resupply - Admin Assign Organization to Vendor Page (inside admin/ folder)
+ * Updated for new folder structure (May 14, 2026)
+ * All includes use ../includes/ and asset paths updated
+ */
 
-if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
-    header("Location: dashboard.php");
+$page_title = "Assign Organization to Vendor - Resupply Rocket";
+require_once '../includes/config.php';
+require_once '../includes/header.php';
+
+if (!is_logged_in() || !is_super_admin()) {
+    header("Location: ../login.php");
     exit;
 }
 
-$success = '';
-$error = '';
+$message = $_SESSION['message'] ?? '';
+$error   = $_SESSION['error'] ?? '';
+unset($_SESSION['message'], $_SESSION['error']);
 
-// Handle assignment
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign'])) {
-    $org_id    = (int)$_POST['org_id'];
-    $vendor_id = (int)$_POST['vendor_id'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $vendor_id       = (int)($_POST['vendor_id'] ?? 0);
+    $organization_id = (int)($_POST['organization_id'] ?? 0);
 
-    if ($org_id && $vendor_id) {
-        $stmt = $pdo->prepare("UPDATE organizations SET vendor_id = :vendor_id WHERE id = :org_id");
-        $stmt->execute(['vendor_id' => $vendor_id, 'org_id' => $org_id]);
-        $success = "Organization successfully assigned to the vendor!";
+    if ($vendor_id > 0 && $organization_id > 0) {
+        $stmt = $pdo->prepare("UPDATE vendors SET organization_id = :org_id WHERE id = :vendor_id");
+        $success = $stmt->execute([
+            'org_id'    => $organization_id,
+            'vendor_id' => $vendor_id
+        ]);
+
+        if ($success) {
+            $_SESSION['message'] = "Organization assigned to vendor successfully!";
+            header("Location: admin_assign_organization_to_vendor.php");
+            exit;
+        } else {
+            $error = "Failed to assign organization.";
+        }
     } else {
-        $error = "Please select both an organization and a vendor.";
+        $error = "Please select both a vendor and an organization.";
     }
 }
 
-// Fetch all organizations
-$stmt = $pdo->query("SELECT id, name, vendor_id FROM organizations ORDER BY name");
-$organizations = $stmt->fetchAll();
-
-// Fetch all Vendor Admins (users with is_organization_admin = 1)
-$stmt = $pdo->query("SELECT id, first_name, last_name, email FROM users WHERE is_organization_admin = 1 ORDER BY first_name");
-$vendors = $stmt->fetchAll();
+// Fetch vendors and organizations for dropdowns
+$vendors = $pdo->query("SELECT id, name, company FROM vendors ORDER BY name")->fetchAll();
+$organizations = $pdo->query("SELECT id, name FROM organizations ORDER BY name")->fetchAll();
 ?>
 
 <div class="container mt-4">
-    <h1 class="mb-3">Assign Organization to Vendor</h1>
-    <p class="text-muted">Link existing organizations (like Holstein Testing) to a specific vendor.</p>
+    <h1 class="mb-4">Assign Organization to Vendor</h1>
+    <p class="text-muted">Link a vendor to a specific organization so they can see its shopping lists and orders.</p>
 
-    <?php if ($success): ?>
-        <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+    <?php if ($message): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
     <?php endif; ?>
     <?php if ($error): ?>
         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
@@ -48,45 +60,37 @@ $vendors = $stmt->fetchAll();
     <div class="card">
         <div class="card-body">
             <form method="post">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Organization</label>
-                        <select name="org_id" class="form-select" required>
-                            <option value="">— Select Organization —</option>
-                            <?php foreach ($organizations as $org): ?>
-                                <option value="<?= $org['id'] ?>" <?= $org['vendor_id'] ? 'disabled' : '' ?>>
-                                    <?= htmlspecialchars($org['name']) ?>
-                                    <?= $org['vendor_id'] ? ' (already assigned)' : '' ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Assign to Vendor</label>
-                        <select name="vendor_id" class="form-select" required>
-                            <option value="">— Select Vendor —</option>
-                            <?php foreach ($vendors as $v): ?>
-                                <option value="<?= $v['id'] ?>">
-                                    <?= htmlspecialchars($v['first_name'] . ' ' . $v['last_name']) ?> 
-                                    (<?= htmlspecialchars($v['email']) ?>)
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                <div class="mb-3">
+                    <label class="form-label">Select Vendor</label>
+                    <select name="vendor_id" class="form-select" required>
+                        <option value="">— Choose Vendor —</option>
+                        <?php foreach ($vendors as $v): ?>
+                        <option value="<?= $v['id'] ?>"><?= htmlspecialchars($v['name']) ?> (<?= htmlspecialchars($v['company'] ?? '') ?>)</option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
 
-                <button type="submit" name="assign" class="btn btn-accent send-it-btn w-100 mt-4">
-                    <img src="icons/logo-192.png" alt="Rocket" class="logo-img"> 
-                    ASSIGN ORGANIZATION TO VENDOR
-                </button>
+                <div class="mb-3">
+                    <label class="form-label">Assign to Organization</label>
+                    <select name="organization_id" class="form-select" required>
+                        <option value="">— Choose Organization —</option>
+                        <?php foreach ($organizations as $org): ?>
+                        <option value="<?= $org['id'] ?>"><?= htmlspecialchars($org['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Assign Organization</button>
+                    <a href="admin_dashboard.php" class="btn btn-secondary btn-lg px-5 ms-3">Cancel</a>
+                </div>
             </form>
         </div>
     </div>
 
-    <div class="mt-4">
-        <a href="admin_dashboard.php" class="btn btn-secondary">← Back to Super Admin Dashboard</a>
+    <div class="mt-5">
+        <a href="admin_dashboard.php" class="btn btn-secondary">← Back to Admin Dashboard</a>
     </div>
 </div>
 
-<?php require_once 'footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

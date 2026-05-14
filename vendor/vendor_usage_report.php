@@ -1,65 +1,94 @@
 <?php
-// vendor_usage_report.php – Vendor's own usage report (billing switched off) – 2026-05-12
-$page_title = "My Usage Report - Resupply Rocket";
-require_once 'header.php';
+/**
+ * resupply - Vendor Usage Report Page (inside vendor/ folder)
+ * Updated for new folder structure (May 14, 2026)
+ * All includes use ../includes/ and asset paths updated
+ */
 
-if (!isset($_SESSION['is_organization_admin']) || !$_SESSION['is_organization_admin']) {
-    header("Location: vendor_dashboard.php");
+$page_title = "Usage Report - Resupply Rocket";
+require_once '../includes/config.php';
+require_once '../includes/header.php';
+
+if (!is_logged_in() || !is_vendor()) {
+    header("Location: ../login.php");
     exit;
 }
 
+$message = $_SESSION['message'] ?? '';
+$error   = $_SESSION['error'] ?? '';
+unset($_SESSION['message'], $_SESSION['error']);
+
 $vendor_id = $_SESSION['vendor_id'] ?? 0;
 
-// Get usage for this vendor's organizations this month and last month
-$current_month = date('Y-m-01');
-$last_month    = date('Y-m-01', strtotime('-1 month'));
-
-$stmt = $pdo->prepare("
-    SELECT o.name as org_name, 
-           COALESCE(SUM(mu.orders_count), 0) as orders_count,
-           COALESCE(SUM(mu.checkbox_uses), 0) as checkbox_uses,
-           COUNT(DISTINCT mu.organization_id) as active_orgs
-    FROM organizations o
-    LEFT JOIN monthly_usage mu ON o.id = mu.organization_id 
-        AND mu.usage_month = :month
-    WHERE o.vendor_id = :vendor_id
-    GROUP BY o.id
-    ORDER BY o.name
-");
-$stmt->execute(['month' => $current_month, 'vendor_id' => $vendor_id]);
-$current_usage = $stmt->fetchAll();
+// Fetch usage report data for organizations assigned to this vendor
+$stmt = $pdo->prepare("SELECT 
+    u.first_name, u.last_name,
+    org.name as org_name,
+    p.name as product_name,
+    ul.quantity,
+    ul.notes,
+    ul.recorded_at
+    FROM usage_logs ul
+    JOIN users u ON ul.user_id = u.id
+    JOIN organizations org ON ul.organization_id = org.id
+    JOIN products p ON ul.product_id = p.id
+    WHERE org.vendor_id = :vendor_id
+    ORDER BY ul.recorded_at DESC LIMIT 100");
+$stmt->execute(['vendor_id' => $vendor_id]);
+$usage_logs = $stmt->fetchAll();
 ?>
 
 <div class="container mt-4">
-    <h1 class="mb-3">My Usage Report</h1>
-    <p class="text-muted">Active organizations = those that placed orders from shopping lists OR used checkbox lists this month.</p>
+    <h1 class="mb-4">Usage Report</h1>
+    <p class="text-muted">Detailed usage logs from all your partnered organizations.</p>
+
+    <?php if ($message): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
+    <?php endif; ?>
+    <?php if ($error): ?>
+        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
 
     <div class="card">
         <div class="card-body">
-            <h5>Current Month (<?= date('F Y') ?>)</h5>
-            <?php if (empty($current_usage)): ?>
-                <p class="text-muted">No activity yet this month.</p>
+            <?php if ($usage_logs): ?>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Organization</th>
+                                <th>User</th>
+                                <th>Product</th>
+                                <th>Quantity Used</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($usage_logs as $log): ?>
+                            <tr>
+                                <td><?= date('M j, Y g:i A', strtotime($log['recorded_at'])) ?></td>
+                                <td><?= htmlspecialchars($log['org_name']) ?></td>
+                                <td><?= htmlspecialchars($log['first_name'] . ' ' . $log['last_name']) ?></td>
+                                <td><?= htmlspecialchars($log['product_name']) ?></td>
+                                <td class="text-end"><?= (int)$log['quantity'] ?></td>
+                                <td><?= htmlspecialchars($log['notes'] ?? '—') ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             <?php else: ?>
-                <table class="table table-hover">
-                    <thead><tr><th>Organization</th><th>Orders</th><th>Checkbox Uses</th><th>Active</th></tr></thead>
-                    <tbody>
-                        <?php foreach ($current_usage as $row): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($row['org_name']) ?></td>
-                            <td><?= $row['orders_count'] ?></td>
-                            <td><?= $row['checkbox_uses'] ?></td>
-                            <td><span class="badge bg-success">Yes</span></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                <div class="alert alert-info">
+                    No usage logs recorded yet. When your organizations record usage, it will appear here.
+                </div>
             <?php endif; ?>
         </div>
     </div>
 
-    <div class="mt-4">
+    <div class="mt-5">
         <a href="vendor_dashboard.php" class="btn btn-secondary">← Back to Vendor Dashboard</a>
     </div>
 </div>
 
-<?php require_once 'footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

@@ -1,28 +1,40 @@
 <?php
-// dismiss_message.php – Modified 2026-05-08 – Lines: 45
-require_once 'config.php';
-session_start();
+/**
+ * resupply - Dismiss Message Handler
+ * Updated for new folder structure (May 14, 2026)
+ * Simple AJAX/session message dismiss - no includes needed beyond config
+ */
 
-if (!isset($_SESSION['user_id']) || !isset($_POST['msg_id'])) {
-    http_response_code(400);
+require_once 'includes/config.php';
+
+if (!is_logged_in()) {
+    header("Location: login.php");
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
-$msg_id  = intval($_POST['msg_id']);
+// This file is usually called via AJAX or GET to clear a temporary message
+if (isset($_GET['dismiss']) || $_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Clear any session message
+    if (isset($_SESSION['message'])) {
+        unset($_SESSION['message']);
+    }
+    if (isset($_SESSION['error'])) {
+        unset($_SESSION['error']);
+    }
 
-try {
-    $stmt = $pdo->prepare("INSERT INTO user_messages (user_id, message_id, dismissed) 
-                           VALUES (:user_id, :msg_id, 1) 
-                           ON DUPLICATE KEY UPDATE dismissed = 1");
-    $stmt->execute([
-        'user_id' => $user_id,
-        'msg_id'  => $msg_id
-    ]);
-    
-    echo json_encode(['success' => true]);
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false]);
+    // If called via AJAX, just return success
+    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+        echo json_encode(['status' => 'success']);
+        exit;
+    }
+
+    // Otherwise redirect back to the referring page
+    $redirect = $_SERVER['HTTP_REFERER'] ?? 'dashboard.php';
+    header("Location: $redirect");
+    exit;
 }
+
+// Fallback if someone visits directly
+header("Location: dashboard.php");
+exit;
 ?>

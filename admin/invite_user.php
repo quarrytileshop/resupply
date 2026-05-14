@@ -1,97 +1,119 @@
 <?php
-// invite_user.php – Modified 2026-05-08 – Lines: 160
-require_once 'config.php';
-session_start();
+/**
+ * resupply - Invite User Page (inside admin/ folder)
+ * Updated for new folder structure (May 14, 2026)
+ * All includes use ../includes/ and asset paths updated
+ */
 
-if (!isset($_SESSION['user_id']) || !$_SESSION['is_admin']) {
-    header("Location: login.php");
+$page_title = "Invite User - Resupply Rocket";
+require_once '../includes/config.php';
+require_once '../includes/header.php';
+
+if (!is_logged_in() || !is_super_admin()) {
+    header("Location: ../login.php");
     exit;
 }
 
-$message = '';
-$error = '';
+$message = $_SESSION['message'] ?? '';
+$error   = $_SESSION['error'] ?? '';
+unset($_SESSION['message'], $_SESSION['error']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $first_name = trim($_POST['first_name'] ?? '');
-    $last_name  = trim($_POST['last_name'] ?? '');
-    $organization_id = intval($_POST['organization_id'] ?? 0);
+    $first_name      = trim($_POST['first_name'] ?? '');
+    $last_name       = trim($_POST['last_name'] ?? '');
+    $email           = trim($_POST['email'] ?? '');
+    $organization_id = (int)($_POST['organization_id'] ?? 0);
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "Invalid email address.";
-    } elseif (empty($first_name) || empty($last_name)) {
-        $error = "First and last name are required.";
-    } else {
-        // TODO: Generate temp password or magic link (expand later)
-        $temp_password = substr(md5(rand()), 0, 12);
-        $password_hash = password_hash($temp_password, PASSWORD_DEFAULT);
+    if ($first_name && $last_name && $email) {
+        $token = bin2hex(random_bytes(32));
+        $expires = date('Y-m-d H:i:s', strtotime('+48 hours'));
 
         $stmt = $pdo->prepare("INSERT INTO users 
-            (organization_id, first_name, last_name, username, email, password_hash, approval_status) 
-            VALUES (:org_id, :fn, :ln, :un, :email, :hash, 'pending')");
-        $stmt->execute([
-            'org_id' => $organization_id,
-            'fn'     => $first_name,
-            'ln'     => $last_name,
-            'un'     => $first_name . ' ' . $last_name,
-            'email'  => $email,
-            'hash'   => $password_hash
+            (first_name, last_name, email, username, organization_id, approval_status, reset_token, reset_expires, created_at) 
+            VALUES (:first_name, :last_name, :email, :username, :org_id, 'pending', :token, :expires, NOW())");
+        
+        $username = strtolower($first_name . '.' . $last_name);
+        
+        $success = $stmt->execute([
+            'first_name' => $first_name,
+            'last_name'  => $last_name,
+            'email'      => $email,
+            'username'   => $username,
+            'org_id'     => $organization_id ?: null,
+            'token'      => $token,
+            'expires'    => $expires
         ]);
 
-        $message = "✅ Invitation sent to $email. They can set their password on first login.";
+        if ($success) {
+            $reset_link = "https://" . $_SERVER['HTTP_HOST'] . "/resupply/set_password.php?token=" . $token;
+            $_SESSION['message'] = "User invited successfully!<br>They can set their password here:<br><strong>" . htmlspecialchars($reset_link) . "</strong>";
+            header("Location: invite_user.php");
+            exit;
+        } else {
+            $error = "Failed to invite user. Please try again.";
+        }
+    } else {
+        $error = "First name, last name, and email are required.";
     }
 }
+
+// Fetch organizations for dropdown
+$stmt = $pdo->prepare("SELECT id, name FROM organizations ORDER BY name");
+$stmt->execute();
+$organizations = $stmt->fetchAll();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invite User - Resupply Rocket</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card shadow">
-                    <div class="card-body p-5">
-                        <h2 class="text-center mb-4">Invite New User</h2>
+<div class="container mt-4">
+    <h1 class="mb-4">Invite New User</h1>
+    <p class="text-muted">Send an invitation so a new user can register and set their password.</p>
 
-                        <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
-                        <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+    <?php if ($message): ?>
+        <div class="alert alert-success"><?= $message ?></div>
+    <?php endif; ?>
+    <?php if ($error): ?>
+        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
 
-                        <form method="post">
-                            <div class="mb-3">
-                                <label class="form-label">Email Address</label>
-                                <input type="email" name="email" class="form-control" required>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label">First Name</label>
-                                    <input type="text" name="first_name" class="form-control" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Last Name</label>
-                                    <input type="text" name="last_name" class="form-control" required>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Organization</label>
-                                <select name="organization_id" class="form-select" required>
-                                    <!-- Populate from organizations table in future -->
-                                    <option value="1">Sample Organization</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Send Invitation</button>
-                        </form>
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">First Name</label>
+                        <input type="text" name="first_name" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" name="last_name" class="form-control" required>
                     </div>
                 </div>
-            </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Assign to Organization (optional)</label>
+                    <select name="organization_id" class="form-select">
+                        <option value="">— No Organization Yet —</option>
+                        <?php foreach ($organizations as $org): ?>
+                        <option value="<?= $org['id'] ?>"><?= htmlspecialchars($org['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <button type="submit" class="btn btn-success btn-lg px-5">Send Invitation</button>
+                    <a href="admin_users.php" class="btn btn-secondary btn-lg px-5 ms-3">Cancel</a>
+                </div>
+            </form>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <div class="mt-5">
+        <a href="admin_dashboard.php" class="btn btn-secondary">← Back to Admin Dashboard</a>
+    </div>
+</div>
+
+<?php require_once '../includes/footer.php'; ?>

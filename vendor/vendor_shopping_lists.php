@@ -1,44 +1,57 @@
 <?php
-// vendor_shopping_lists.php – Full expanded version with vendor_id isolation – 2026-05-11
-$page_title = "My Shopping Lists - Resupply Rocket";
-require_once 'header.php';
+/**
+ * resupply - Vendor Shopping Lists Page (inside vendor/ folder)
+ * Updated for new folder structure (May 14, 2026)
+ * All includes use ../includes/ and asset paths updated
+ */
 
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_organization_admin']) || !$_SESSION['is_organization_admin']) {
-    header("Location: dashboard.php");
+$page_title = "Vendor Shopping Lists - Resupply Rocket";
+require_once '../includes/config.php';
+require_once '../includes/header.php';
+
+if (!is_logged_in() || !is_vendor()) {
+    header("Location: ../login.php");
     exit;
 }
 
+$message = $_SESSION['message'] ?? '';
+$error   = $_SESSION['error'] ?? '';
+unset($_SESSION['message'], $_SESSION['error']);
+
 $vendor_id = $_SESSION['vendor_id'] ?? 0;
 
-// Fetch only this vendor's shopping lists
-$stmt = $pdo->prepare("SELECT sl.*, o.name as org_name, u.first_name 
+// Fetch shopping lists for organizations assigned to this vendor
+$stmt = $pdo->prepare("SELECT sl.*, o.name as org_name 
                        FROM shopping_lists sl 
-                       LEFT JOIN organizations o ON sl.organization_id = o.id 
-                       LEFT JOIN users u ON sl.created_by = u.id 
-                       WHERE sl.vendor_id = :vendor_id 
+                       JOIN organizations o ON sl.organization_id = o.id 
+                       WHERE o.vendor_id = :vendor_id 
                        ORDER BY sl.created_at DESC");
 $stmt->execute(['vendor_id' => $vendor_id]);
 $lists = $stmt->fetchAll();
 ?>
 
 <div class="container mt-4">
-    <h1 class="mb-3">My Shopping Lists</h1>
-    <p class="text-muted">All lists you’ve built for your customers.</p>
+    <h1 class="mb-4">Shopping Lists</h1>
+    <p class="text-muted">All shopping lists created by your partnered organizations.</p>
 
-    <?php if (empty($lists)): ?>
-        <div class="alert alert-info">No shopping lists yet. Go to the builder to create your first one.</div>
-    <?php else: ?>
-        <div class="card">
-            <div class="card-body">
+    <?php if ($message): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
+    <?php endif; ?>
+    <?php if ($error): ?>
+        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
+
+    <div class="card">
+        <div class="card-body">
+            <?php if ($lists): ?>
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover table-striped">
+                        <thead class="table-light">
                             <tr>
                                 <th>List Name</th>
                                 <th>Organization</th>
-                                <th>Created By</th>
-                                <th>Date</th>
-                                <th>Action</th>
+                                <th>Created</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -46,24 +59,27 @@ $lists = $stmt->fetchAll();
                             <tr>
                                 <td><?= htmlspecialchars($list['name']) ?></td>
                                 <td><?= htmlspecialchars($list['org_name']) ?></td>
-                                <td><?= htmlspecialchars($list['first_name']) ?></td>
-                                <td><?= date('M j, Y', strtotime($list['created_at'])) ?></td>
+                                <td><?= date('M j, Y g:i A', strtotime($list['created_at'])) ?></td>
                                 <td>
-                                    <a href="shopping_list_builder.php?edit=<?= $list['id'] ?>" class="btn btn-sm btn-primary">Edit</a>
+                                    <a href="../shopping_lists.php?list_id=<?= $list['id'] ?>" 
+                                       class="btn btn-sm btn-outline-primary">View List</a>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            <?php else: ?>
+                <div class="alert alert-info">
+                    No shopping lists yet. When your organizations create lists, they will appear here.
+                </div>
+            <?php endif; ?>
         </div>
-    <?php endif; ?>
+    </div>
 
-    <div class="mt-4">
+    <div class="mt-5">
         <a href="vendor_dashboard.php" class="btn btn-secondary">← Back to Vendor Dashboard</a>
-        <a href="shopping_list_builder.php" class="btn btn-primary ms-2">+ New Shopping List</a>
     </div>
 </div>
 
-<?php require_once 'footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

@@ -1,9 +1,15 @@
 <?php
-// shopping_lists.php – Full rewrite with original logic – Updated 2026-05-11
-$page_title = "My Shopping Lists - Resupply Rocket";
-require_once 'header.php';
+/**
+ * resupply - Shopping Lists Page
+ * Updated for new folder structure (May 14, 2026)
+ * All includes and internal links updated
+ */
 
-if (!isset($_SESSION['user_id'])) {
+$page_title = "My Shopping Lists - Resupply Rocket";
+require_once 'includes/config.php';
+require_once 'includes/header.php';
+
+if (!is_logged_in()) {
     header("Location: login.php");
     exit;
 }
@@ -30,7 +36,7 @@ $lists = $stmt->fetchAll();
                     <div class="card-body">
                         <h5><?= htmlspecialchars($list['name']) ?></h5>
                         <p class="text-muted"><?= htmlspecialchars($list['description'] ?? '') ?></p>
-                        <a href="general_order.php?list_id=<?= $list['id'] ?>" class="btn btn-primary w-100">Use This List →</a>
+                        <a href="orders/general_order.php?list_id=<?= $list['id'] ?>" class="btn btn-primary w-100">Use This List →</a>
                     </div>
                 </div>
             </div>
@@ -43,4 +49,4 @@ $lists = $stmt->fetchAll();
     </div>
 </div>
 
-<?php require_once 'footer.php'; ?>
+<?php require_once 'includes/footer.php'; ?>

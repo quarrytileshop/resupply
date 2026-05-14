@@ -1,7 +1,12 @@
 <?php
-// login.php – Added dedicated is_vendor_admin support for clear role separation – 2026-05-12
+/**
+ * resupply - Login Page
+ * Updated for new folder structure (May 14, 2026)
+ * All includes and asset paths updated
+ */
+
 $page_title = "Login - Resupply Rocket";
-require_once 'header.php';
+require_once 'includes/header.php';
 
 $error = '';
 
@@ -35,9 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Clear, mutually-exclusive role priority (Super > Vendor > Org > User)
                 if ($user['is_admin']) {
-                    $redirect = 'admin_dashboard.php';
+                    $redirect = 'admin/admin_dashboard.php';
                 } elseif ($user['is_vendor_admin']) {
-                    $redirect = 'vendor_dashboard.php';
+                    $redirect = 'vendor/vendor_dashboard.php';
                 } elseif ($user['is_organization_admin']) {
                     $redirect = 'organization_admin.php';
                 } else {
@@ -60,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body p-5">
-                    <img src="icons/logo-192.png" alt="Logo" class="mx-auto d-block mb-4" style="max-width:150px;">
+                    <img src="assets/icons/logo-192.png" alt="Logo" class="mx-auto d-block mb-4" style="max-width:150px;">
                     <h2 class="text-center mb-4">Login</h2>
 
                     <?php if ($error): ?>
@@ -89,4 +94,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
-<?php require_once 'footer.php'; ?>
+<?php require_once 'includes/footer.php'; ?>

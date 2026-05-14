@@ -1,7 +1,14 @@
 <?php
-// logout.php – Full rewrite – Updated 2026-05-11
-require_once 'header.php';
+/**
+ * resupply - Logout Page
+ * Updated for new folder structure (May 14, 2026)
+ * All includes updated to new locations
+ */
 
+require_once 'includes/config.php';
+require_once 'includes/header.php';
+
+// Destroy the session
 session_destroy();
 ?>
 
@@ -19,4 +26,4 @@ session_destroy();
     </div>
 </div>
 
-<?php require_once 'footer.php'; ?>
+<?php require_once 'includes/footer.php'; ?>

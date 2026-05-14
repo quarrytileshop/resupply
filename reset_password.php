@@ -1,83 +1,101 @@
 <?php
-// reset_password.php – Modified 2026-05-08 – Lines: 150
-require_once 'config.php';
-session_start();
+/**
+ * resupply - Reset Password Page
+ * Updated for new folder structure (May 14, 2026)
+ * All includes and asset paths updated
+ */
 
-$message = '';
+$page_title = "Reset Password - Resupply Rocket";
+require_once 'includes/header.php';
+
 $error = '';
+$success = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $current_password = $_POST['current_password'] ?? '';
-    $new_password     = $_POST['new_password'] ?? '';
-    $confirm_password = $_POST['confirm_password'] ?? '';
+$token = $_GET['token'] ?? '';
+if (empty($token)) {
+    $error = "Invalid or missing reset token.";
+} else {
+    // Check if token is valid and not expired
+    $stmt = $pdo->prepare("SELECT id, first_name FROM users 
+                           WHERE reset_token = :token AND reset_expires > NOW()");
+    $stmt->execute(['token' => $token]);
+    $user = $stmt->fetch();
 
-    if (empty($current_password) || empty($new_password)) {
-        $error = "All fields are required.";
-    } elseif ($new_password !== $confirm_password) {
-        $error = "New passwords do not match.";
-    } elseif (strlen($new_password) < 8) {
-        $error = "New password must be at least 8 characters.";
-    } else {
-        $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = :id");
-        $stmt->execute(['id' => $_SESSION['user_id']]);
-        $user = $stmt->fetch();
+    if (!$user) {
+        $error = "This password reset link is invalid or has expired.";
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $password         = $_POST['password'] ?? '';
+        $confirm_password = $_POST['confirm_password'] ?? '';
 
-        if ($user && password_verify($current_password, $user['password_hash'])) {
-            $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("UPDATE users SET password_hash = :hash WHERE id = :id");
-            $stmt->execute(['hash' => $new_hash, 'id' => $_SESSION['user_id']]);
-            $message = "✅ Password updated successfully.";
+        if (empty($password) || $password !== $confirm_password) {
+            $error = "Passwords do not match or are empty.";
+        } elseif (strlen($password) < 8) {
+            $error = "Password must be at least 8 characters long.";
         } else {
-            $error = "Current password is incorrect.";
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+
+            $stmt = $pdo->prepare("UPDATE users SET 
+                password_hash = :password_hash,
+                reset_token = NULL,
+                reset_expires = NULL
+                WHERE id = :id");
+            
+            $updated = $stmt->execute([
+                'password_hash' => $password_hash,
+                'id'            => $user['id']
+            ]);
+
+            if ($updated) {
+                $success = "Your password has been successfully reset. You can now login.";
+            } else {
+                $error = "Failed to reset password. Please try again.";
+            }
         }
     }
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Password - Resupply Rocket</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card shadow">
-                    <div class="card-body p-5">
-                        <h2 class="text-center mb-4">Change Password</h2>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body p-5">
+                    <img src="assets/icons/logo-192.png" alt="Logo" class="mx-auto d-block mb-4" style="max-width:120px;">
+                    <h2 class="text-center mb-4">Reset Your Password</h2>
 
-                        <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
-                        <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+                    <?php if ($error): ?>
+                        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+                        <div class="text-center mt-4">
+                            <a href="forgot_password.php" class="btn btn-primary">Request New Reset Link</a>
+                        </div>
+                    <?php elseif ($success): ?>
+                        <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+                        <div class="text-center mt-4">
+                            <a href="login.php" class="btn btn-success btn-lg">Go to Login</a>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-center text-muted mb-4">Enter your new password below.</p>
 
                         <form method="post">
                             <div class="mb-3">
-                                <label class="form-label">Current Password</label>
-                                <input type="password" name="current_password" class="form-control" required>
+                                <label class="form-label">New Password</label>
+                                <input type="password" name="password" class="form-control" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">New Password</label>
-                                <input type="password" name="new_password" class="form-control" required>
-                            </div>
-                            <div class="mb-4">
                                 <label class="form-label">Confirm New Password</label>
                                 <input type="password" name="confirm_password" class="form-control" required>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100">Update Password</button>
+                            <button type="submit" class="btn btn-primary w-100">Reset Password</button>
                         </form>
 
                         <div class="text-center mt-4">
-                            <a href="dashboard.php">← Back to Dashboard</a>
+                            <a href="login.php">Back to Login</a>
                         </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once 'includes/footer.php'; ?>

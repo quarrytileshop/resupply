@@ -1,89 +1,102 @@
 <?php
-// admin_users.php – Modified 2026-05-08 – Lines: 220
-require_once 'config.php';
-session_start();
+/**
+ * resupply - Admin Users Page (inside admin/ folder)
+ * Updated for new folder structure (May 14, 2026)
+ * All includes use ../includes/ and asset paths updated
+ */
 
-if (!isset($_SESSION['user_id']) || !$_SESSION['is_admin']) {
-    header("Location: login.php");
+$page_title = "Manage Users - Resupply Rocket";
+require_once '../includes/config.php';
+require_once '../includes/header.php';
+
+if (!is_logged_in() || !is_super_admin()) {
+    header("Location: ../login.php");
     exit;
 }
 
-// Fetch all users
-$stmt = $pdo->query("SELECT u.*, o.name as organization_name 
-                     FROM users u 
-                     LEFT JOIN organizations o ON u.organization_id = o.id 
-                     ORDER BY u.approval_status, u.first_name");
+$message = $_SESSION['message'] ?? '';
+$error   = $_SESSION['error'] ?? '';
+unset($_SESSION['message'], $_SESSION['error']);
+
+// Fetch all users (preserves original logic)
+$stmt = $pdo->prepare("SELECT u.*, o.name as org_name 
+                       FROM users u 
+                       LEFT JOIN organizations o ON u.organization_id = o.id 
+                       ORDER BY u.first_name, u.last_name");
+$stmt->execute();
 $users = $stmt->fetchAll();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Manage Users</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <!-- Top Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="admin_dashboard.php">Resupply Rocket Admin</a>
-            <div class="navbar-nav">
-                <a class="nav-link" href="admin_dashboard.php">Dashboard</a>
-                <a class="nav-link" href="admin_organizations.php">Organizations</a>
-                <a class="nav-link active" href="admin_users.php">Users</a>
-                <a class="nav-link" href="admin_catalog.php">Catalog</a>
-                <a class="nav-link" href="admin_orders.php">Orders</a>
-                <a class="nav-link" href="logout.php">Logout</a>
-            </div>
-        </div>
-    </nav>
+<div class="container mt-4">
+    <h1 class="mb-4">Manage Users</h1>
 
-    <div class="container mt-4">
-        <h1>Manage Users</h1>
-        <p class="text-muted">Total users: <?= count($users) ?></p>
+    <?php if ($message): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
+    <?php endif; ?>
+    <?php if ($error): ?>
+        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
 
-        <a href="#" class="btn btn-success mb-3">+ Invite New User</a>
+    <div class="mb-3">
+        <a href="admin_pre_register.php" class="btn btn-success">Pre-Register New User</a>
+    </div>
 
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Organization</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($users as $user): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></td>
-                        <td><?= htmlspecialchars($user['email']) ?></td>
-                        <td><?= htmlspecialchars($user['organization_name'] ?? '—') ?></td>
-                        <td>
-                            <span class="badge bg-<?= $user['approval_status'] === 'approved' ? 'success' : 'warning' ?>">
-                                <?= ucfirst($user['approval_status']) ?>
-                            </span>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-primary">Edit</button>
-                            <button class="btn btn-sm btn-warning">Reset PW</button>
-                            <?php if ($user['suspended']): ?>
-                                <button class="btn btn-sm btn-success">Unsuspend</button>
-                            <?php else: ?>
-                                <button class="btn btn-sm btn-danger">Suspend</button>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+    <div class="card">
+        <div class="card-body">
+            <?php if ($users): ?>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Username</th>
+                                <th>Organization</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($users as $user): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></td>
+                                <td><?= htmlspecialchars($user['email']) ?></td>
+                                <td><?= htmlspecialchars($user['username']) ?></td>
+                                <td><?= htmlspecialchars($user['org_name'] ?? '—') ?></td>
+                                <td>
+                                    <?php if ($user['is_admin']): ?>
+                                        <span class="badge bg-danger">Super Admin</span>
+                                    <?php elseif ($user['is_vendor_admin']): ?>
+                                        <span class="badge bg-warning">Vendor</span>
+                                    <?php elseif ($user['is_organization_admin']): ?>
+                                        <span class="badge bg-info">Org Admin</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary">User</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="badge bg-<?= $user['approval_status'] === 'approved' ? 'success' : 'warning' ?>">
+                                        <?= ucfirst($user['approval_status'] ?? 'pending') ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="admin_impersonate.php?user_id=<?= $user['id'] ?>" class="btn btn-sm btn-outline-primary">Impersonate</a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <p class="text-muted">No users found.</p>
+            <?php endif; ?>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <div class="mt-4">
+        <a href="admin_dashboard.php" class="btn btn-secondary">← Back to Admin Dashboard</a>
+    </div>
+</div>
+
+<?php require_once '../includes/footer.php'; ?>

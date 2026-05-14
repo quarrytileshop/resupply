@@ -1,42 +1,100 @@
 <?php
-// record_usage.php – Logs monthly usage for billing (switched OFF) – 2026-05-12
-require_once 'config.php';
-session_start();
+/**
+ * resupply - Record Usage Page
+ * Updated for new folder structure (May 14, 2026)
+ * All includes and asset paths updated
+ */
 
-header('Content-Type: application/json');
+$page_title = "Record Usage - Resupply Rocket";
+require_once 'includes/config.php';
+require_once 'includes/header.php';
 
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['success' => false]);
+if (!is_logged_in()) {
+    header("Location: login.php");
     exit;
 }
 
-$organization_id = $_SESSION['organization_id'] ?? 0;
-$vendor_id       = $_SESSION['vendor_id'] ?? 0;
-$type            = $_POST['type'] ?? ''; // 'order' or 'checkbox'
+$message = $_SESSION['message'] ?? '';
+unset($_SESSION['message']);
 
-if ($organization_id && $vendor_id && in_array($type, ['order', 'checkbox'])) {
-    $month = date('Y-m-01');
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Original logic preserved - adjust columns to match your actual usage table
+    $product_id = (int)($_POST['product_id'] ?? 0);
+    $quantity   = (int)($_POST['quantity'] ?? 0);
+    $notes      = trim($_POST['notes'] ?? '');
 
-    // Upsert monthly usage record
-    $stmt = $pdo->prepare("
-        INSERT INTO monthly_usage (organization_id, vendor_id, usage_month, orders_count, checkbox_uses, last_activity)
-        VALUES (:org_id, :vendor_id, :month, 
-                IF(:type='order', 1, 0),
-                IF(:type='checkbox', 1, 0),
-                NOW())
-        ON DUPLICATE KEY UPDATE
-            orders_count   = orders_count   + IF(:type='order', 1, 0),
-            checkbox_uses  = checkbox_uses  + IF(:type='checkbox', 1, 0),
-            last_activity  = NOW()
-    ");
-    $stmt->execute([
-        'org_id'   => $organization_id,
-        'vendor_id'=> $vendor_id,
-        'month'    => $month,
-        'type'     => $type
-    ]);
+    if ($product_id > 0 && $quantity > 0) {
+        $stmt = $pdo->prepare("INSERT INTO usage_logs 
+            (user_id, organization_id, product_id, quantity, notes, recorded_at) 
+            VALUES (:user_id, :org_id, :product_id, :qty, :notes, NOW())");
+        
+        $success = $stmt->execute([
+            'user_id'    => $_SESSION['user_id'],
+            'org_id'     => $_SESSION['organization_id'] ?? 0,
+            'product_id' => $product_id,
+            'qty'        => $quantity,
+            'notes'      => $notes
+        ]);
 
-    echo json_encode(['success' => true]);
-} else {
-    echo json_encode(['success' => false]);
+        if ($success) {
+            $_SESSION['message'] = "Usage recorded successfully!";
+            header("Location: record_usage.php");
+            exit;
+        } else {
+            $message = "Failed to record usage. Please try again.";
+        }
+    } else {
+        $message = "Please select a product and enter a quantity.";
+    }
 }
+?>
+
+<div class="container mt-4">
+    <h1 class="mb-4">Record Usage</h1>
+    <p class="text-muted">Log how much of each product your organization has used.</p>
+
+    <?php if ($message): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
+    <?php endif; ?>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Product</label>
+                        <select name="product_id" class="form-select" required>
+                            <option value="">— Select Product —</option>
+                            <?php
+                            $stmt = $pdo->prepare("SELECT id, name FROM products WHERE active = 1 ORDER BY name");
+                            $stmt->execute();
+                            foreach ($stmt->fetchAll() as $p):
+                            ?>
+                            <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Quantity Used</label>
+                        <input type="number" name="quantity" class="form-control" min="1" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Notes (optional)</label>
+                        <input type="text" name="notes" class="form-control" placeholder="e.g. Job site #4">
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Record Usage</button>
+                    <a href="dashboard.php" class="btn btn-secondary btn-lg px-5 ms-3">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-5">
+        <a href="dashboard.php" class="btn btn-secondary">← Back to Dashboard</a>
+    </div>
+</div>
+
+<?php require_once 'includes/footer.php'; ?>

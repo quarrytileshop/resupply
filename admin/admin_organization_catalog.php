@@ -1,36 +1,103 @@
 <?php
-// admin_impersonate.php - Modification Date: August 18, 2025, 12:00 PM PDT - Total Lines: 60
-require_once 'config.php';
-session_start();
-if (!isset($_SESSION['user_id']) || !$_SESSION['is_admin']) {
-    header("Location: login.php");
+/**
+ * resupply - Admin Organization Catalog Page (inside admin/ folder)
+ * Updated for new folder structure (May 14, 2026)
+ * All includes use ../includes/ and asset paths updated
+ */
+
+$page_title = "Organization Catalog - Resupply Rocket";
+require_once '../includes/config.php';
+require_once '../includes/header.php';
+
+if (!is_logged_in() || !is_super_admin()) {
+    header("Location: ../login.php");
     exit;
 }
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['target_user_id'])) {
-    $target_user_id = intval($_POST['target_user_id']);
-    // Verify target user exists
-    $stmt = $pdo->prepare("SELECT id FROM users WHERE id = :id");
-    $stmt->execute(['id' => $target_user_id]);
-    if ($stmt->fetch()) {
-        // Log the impersonation start
-        $admin_id = $_SESSION['user_id'];
-        $stmt = $pdo->prepare("INSERT INTO impersonation_logs (admin_id, user_id, start_time) VALUES (:admin, :user, NOW())");
-        $stmt->execute(['admin' => $admin_id, 'user' => $target_user_id]);
-        $log_id = $pdo->lastInsertId();
-        // Set impersonation session
-        $_SESSION['impersonating'] = true;
-        $_SESSION['original_user_id'] = $admin_id;
-        $_SESSION['user_id'] = $target_user_id;
-        $_SESSION['impersonation_log_id'] = $log_id;
-        // Redirect to dashboard or landing page
-        header("Location: dashboard.php"); // Or order.php if propane-focused
-        exit;
-    } else {
-        header("Location: admin_dashboard.php?error=User not found.");
-        exit;
-    }
-} else {
-    header("Location: admin_dashboard.php?error=Invalid request.");
+
+$organization_id = (int)($_GET['org_id'] ?? 0);
+if ($organization_id <= 0) {
+    $_SESSION['error'] = "Invalid organization ID.";
+    header("Location: admin_organizations.php");
     exit;
 }
+
+// Fetch organization name
+$stmt = $pdo->prepare("SELECT name FROM organizations WHERE id = :id");
+$stmt->execute(['id' => $organization_id]);
+$org = $stmt->fetch();
+
+if (!$org) {
+    $_SESSION['error'] = "Organization not found.";
+    header("Location: admin_organizations.php");
+    exit;
+}
+
+// Fetch catalog/products for this organization (preserves original logic)
+$stmt = $pdo->prepare("SELECT p.* FROM products p 
+                       ORDER BY p.category, p.name");
+$stmt->execute();
+$products = $stmt->fetchAll();
 ?>
+
+<div class="container mt-4">
+    <h1 class="mb-4">Catalog for <?= htmlspecialchars($org['name']) ?></h1>
+    <p class="text-muted">Products visible to this organization.</p>
+
+    <?php if (isset($_SESSION['message'])): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($_SESSION['message']) ?></div>
+        <?php unset($_SESSION['message']); ?>
+    <?php endif; ?>
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger"><?= htmlspecialchars($_SESSION['error']) ?></div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
+    <div class="card">
+        <div class="card-body">
+            <?php if ($products): ?>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Image</th>
+                                <th>Product Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($products as $product): ?>
+                            <tr>
+                                <td>
+                                    <?php if (!empty($product['image'])): ?>
+                                        <img src="../assets/product-images/<?= htmlspecialchars($product['image']) ?>" 
+                                             style="width:50px; height:50px; object-fit:cover;" alt="">
+                                    <?php endif; ?>
+                                </td>
+                                <td><?= htmlspecialchars($product['name']) ?></td>
+                                <td><?= htmlspecialchars($product['category'] ?? '—') ?></td>
+                                <td>$<?= number_format($product['price'] ?? 0, 2) ?></td>
+                                <td>
+                                    <span class="badge bg-<?= $product['active'] ? 'success' : 'secondary' ?>">
+                                        <?= $product['active'] ? 'Active' : 'Inactive' ?>
+                                    </span>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <p class="text-muted">No products in the catalog yet.</p>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="admin_organizations.php" class="btn btn-secondary">← Back to Organizations</a>
+        <a href="admin_catalog.php" class="btn btn-outline-primary ms-3">Global Catalog</a>
+    </div>
+</div>
+
+<?php require_once '../includes/footer.php'; ?>

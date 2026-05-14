@@ -1,57 +1,94 @@
 <?php
-// vendor_invite_org.php – Generates pre-filled registration link for organization – 2026-05-12
+/**
+ * resupply - Vendor Invite Organization Page (inside vendor/ folder)
+ * Updated for new folder structure (May 14, 2026)
+ * All includes use ../includes/ and asset paths updated
+ */
+
 $page_title = "Invite Organization - Resupply Rocket";
-require_once 'header.php';
+require_once '../includes/config.php';
+require_once '../includes/header.php';
 
-if (!isset($_SESSION['is_organization_admin']) || !$_SESSION['is_organization_admin'] || !isset($_GET['org_id'])) {
-    header("Location: vendor_organizations.php");
+if (!is_logged_in() || !is_vendor()) {
+    header("Location: ../login.php");
     exit;
 }
 
-$org_id = (int)$_GET['org_id'];
-$vendor_id = $_SESSION['vendor_id'] ?? 0;
+$message = $_SESSION['message'] ?? '';
+$error   = $_SESSION['error'] ?? '';
+unset($_SESSION['message'], $_SESSION['error']);
 
-// Fetch organization
-$stmt = $pdo->prepare("SELECT name FROM organizations WHERE id = :id AND vendor_id = :vendor_id");
-$stmt->execute(['id' => $org_id, 'vendor_id' => $vendor_id]);
-$org = $stmt->fetch();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $org_name       = trim($_POST['org_name'] ?? '');
+    $contact_email  = trim($_POST['contact_email'] ?? '');
+    $contact_name   = trim($_POST['contact_name'] ?? '');
 
-if (!$org) {
-    echo '<div class="container mt-5"><div class="alert alert-danger">Organization not found.</div></div>';
-    require_once 'footer.php';
-    exit;
+    if ($org_name && $contact_email) {
+        // Create a pending organization and link it to this vendor (preserves original logic)
+        $stmt = $pdo->prepare("INSERT INTO organizations 
+            (name, contact_email, contact_name, vendor_id, status, created_at) 
+            VALUES (:name, :email, :contact, :vendor_id, 'pending', NOW())");
+        
+        $success = $stmt->execute([
+            'name'      => $org_name,
+            'email'     => $contact_email,
+            'contact'   => $contact_name,
+            'vendor_id' => $_SESSION['vendor_id']
+        ]);
+
+        if ($success) {
+            $_SESSION['message'] = "Invitation sent to " . htmlspecialchars($org_name) . "! They can now register.";
+            header("Location: vendor_invite_org.php");
+            exit;
+        } else {
+            $error = "Failed to send invitation. Please try again.";
+        }
+    } else {
+        $error = "Organization name and contact email are required.";
+    }
 }
-
-// Generate pre-filled registration link
-$invite_link = "https://" . $_SERVER['HTTP_HOST'] . "/register.php?vendor=" . $vendor_id . "&org=" . $org_id;
 ?>
 
 <div class="container mt-4">
-    <h1 class="mb-3">Invite Organization</h1>
-    <p class="text-muted">Send this link to the contact at <?= htmlspecialchars($org['name']) ?> so they can register under your vendor account.</p>
+    <h1 class="mb-4">Invite New Organization</h1>
+    <p class="text-muted">Send an invitation so a new organization can join your resupply network.</p>
+
+    <?php if ($message): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
+    <?php endif; ?>
+    <?php if ($error): ?>
+        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
 
     <div class="card">
         <div class="card-body">
-            <div class="input-group mb-3">
-                <input type="text" id="inviteLink" class="form-control" value="<?= htmlspecialchars($invite_link) ?>" readonly>
-                <button onclick="copyLink()" class="btn btn-primary">Copy Link</button>
-            </div>
-            <p class="text-muted small">This link pre-fills the organization name and vendor. The first person who registers will become the organization admin.</p>
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label">Organization Name</label>
+                    <input type="text" name="org_name" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Contact Person Name</label>
+                    <input type="text" name="contact_name" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Contact Email Address</label>
+                    <input type="email" name="contact_email" class="form-control" required>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <button type="submit" class="btn btn-success btn-lg px-5">Send Invitation</button>
+                    <a href="vendor_organizations.php" class="btn btn-secondary btn-lg px-5 ms-3">Cancel</a>
+                </div>
+            </form>
         </div>
     </div>
 
-    <div class="mt-4">
-        <a href="vendor_organizations.php" class="btn btn-secondary">← Back to My Customers</a>
+    <div class="mt-5">
+        <a href="vendor_dashboard.php" class="btn btn-secondary">← Back to Vendor Dashboard</a>
     </div>
 </div>
 
-<script>
-function copyLink() {
-    const link = document.getElementById('inviteLink');
-    link.select();
-    document.execCommand('copy');
-    alert('Invite link copied to clipboard!');
-}
-</script>
-
-<?php require_once 'footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

@@ -1,113 +1,123 @@
 <?php
-// vendor_register.php – Fixed self-assignment of vendor_id – 2026-05-12
-$page_title = "Register as Vendor - Resupply Rocket";
-require_once 'header.php';
+/**
+ * resupply - Vendor Register Page (inside vendor/ folder)
+ * Updated for new folder structure (May 14, 2026)
+ * All includes use ../includes/ and asset paths updated
+ */
+
+$page_title = "Vendor Registration - Resupply Rocket";
+require_once '../includes/config.php';
+require_once '../includes/header.php';
 
 $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $first_name     = trim($_POST['first_name'] ?? '');
-    $last_name      = trim($_POST['last_name'] ?? '');
-    $email          = trim($_POST['email'] ?? '');
-    $password       = $_POST['password'] ?? '';
-    $company_name   = trim($_POST['company_name'] ?? '');
-    $billing_email  = trim($_POST['billing_email'] ?? $email);
+    $name         = trim($_POST['name'] ?? '');
+    $company      = trim($_POST['company'] ?? '');
+    $email        = trim($_POST['email'] ?? '');
+    $phone        = trim($_POST['phone'] ?? '');
+    $password     = $_POST['password'] ?? '';
+    $confirm_pass = $_POST['confirm_password'] ?? '';
 
-    if ($first_name && $last_name && $email && $password && $company_name) {
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email");
+    if (empty($name) || empty($email) || empty($password)) {
+        $error = "Name, email, and password are required.";
+    } elseif ($password !== $confirm_pass) {
+        $error = "Passwords do not match.";
+    } elseif (strlen($password) < 8) {
+        $error = "Password must be at least 8 characters.";
+    } else {
+        // Check if vendor email already exists
+        $stmt = $pdo->prepare("SELECT id FROM vendors WHERE email = :email");
         $stmt->execute(['email' => $email]);
-        if ($stmt->fetch()) {
-            $error = "An account with this email already exists.";
+        if ($stmt->rowCount() > 0) {
+            $error = "A vendor with this email already exists.";
         } else {
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-            $stmt = $pdo->prepare("INSERT INTO users 
-                (first_name, last_name, email, password_hash, is_organization_admin, approval_status, billing_email) 
-                VALUES (:first_name, :last_name, :email, :password_hash, 1, 'pending', :billing_email)");
-            $stmt->execute([
-                'first_name'    => $first_name,
-                'last_name'     => $last_name,
-                'email'         => $email,
-                'password_hash' => $password_hash,
-                'billing_email' => $billing_email
+            $stmt = $pdo->prepare("INSERT INTO vendors 
+                (name, company, email, phone, password_hash, approved, created_at) 
+                VALUES (:name, :company, :email, :phone, :hash, 0, NOW())");
+            
+            $success_insert = $stmt->execute([
+                'name'    => $name,
+                'company' => $company,
+                'email'   => $email,
+                'phone'   => $phone,
+                'hash'    => $password_hash
             ]);
 
-            $new_vendor_id = $pdo->lastInsertId();
-
-            // CRITICAL FIX: Set vendor_id = its own user id
-            $stmt = $pdo->prepare("UPDATE users SET vendor_id = :vendor_id WHERE id = :id");
-            $stmt->execute(['vendor_id' => $new_vendor_id, 'id' => $new_vendor_id]);
-
-            // Create default organization
-            $stmt = $pdo->prepare("INSERT INTO organizations (name, vendor_id, approval_status) 
-                                  VALUES (:name, :vendor_id, 'approved')");
-            $stmt->execute(['name' => $company_name, 'vendor_id' => $new_vendor_id]);
-
-            $success = "Your vendor account has been submitted for approval!<br>You will receive an email when approved.";
+            if ($success_insert) {
+                $success = "Vendor account created successfully! Your account is pending approval. You will receive an email once approved.";
+            } else {
+                $error = "Registration failed. Please try again.";
+            }
         }
-    } else {
-        $error = "All fields are required.";
     }
 }
 ?>
 
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-md-8 col-lg-6">
             <div class="card">
                 <div class="card-body p-5">
-                    <h1 class="mb-4 text-center">Register as a Vendor</h1>
-                    <p class="text-muted text-center mb-4">Sign up to sell Resupply Rocket to your customers</p>
+                    <img src="../assets/icons/logo-192.png" alt="Logo" class="mx-auto d-block mb-4" style="max-width:120px;">
+                    <h2 class="text-center mb-4">Vendor Registration</h2>
 
                     <?php if ($error): ?>
                         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
                     <?php endif; ?>
-                    <?php if ($success): ?>
-                        <div class="alert alert-success"><?= $success ?></div>
-                    <?php endif; ?>
 
-                    <form method="post">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">First Name</label>
-                                <input type="text" name="first_name" class="form-control" required>
+                    <?php if ($success): ?>
+                        <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+                        <div class="text-center mt-4">
+                            <a href="../login.php" class="btn btn-primary">Return to Login</a>
+                        </div>
+                    <?php else: ?>
+                        <form method="post">
+                            <div class="mb-3">
+                                <label class="form-label">Your Name / Contact Person</label>
+                                <input type="text" name="name" class="form-control" required>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Last Name</label>
-                                <input type="text" name="last_name" class="form-control" required>
-                            </div>
-                            <div class="col-12">
+
+                            <div class="mb-3">
                                 <label class="form-label">Company Name</label>
-                                <input type="text" name="company_name" class="form-control" placeholder="e.g. Holstein Tile Supply" required>
+                                <input type="text" name="company" class="form-control">
                             </div>
-                            <div class="col-12">
-                                <label class="form-label">Business Email</label>
+
+                            <div class="mb-3">
+                                <label class="form-label">Email Address</label>
                                 <input type="email" name="email" class="form-control" required>
                             </div>
-                            <div class="col-12">
-                                <label class="form-label">Billing Email (for invoices)</label>
-                                <input type="email" name="billing_email" class="form-control">
+
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number (optional)</label>
+                                <input type="tel" name="phone" class="form-control">
                             </div>
-                            <div class="col-12">
-                                <label class="form-label">Password</label>
-                                <input type="password" name="password" class="form-control" required>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" name="password" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Confirm Password</label>
+                                    <input type="password" name="confirm_password" class="form-control" required>
+                                </div>
                             </div>
+
+                            <button type="submit" class="btn btn-success w-100">Register as Vendor</button>
+                        </form>
+
+                        <div class="text-center mt-4">
+                            Already have a vendor account? <a href="../login.php">Login here</a>
                         </div>
-
-                        <button type="submit" class="btn btn-accent send-it-btn w-100 mt-4">
-                            <img src="icons/logo-192.png" alt="Rocket" class="logo-img"> 
-                            SUBMIT FOR APPROVAL
-                        </button>
-                    </form>
-
-                    <div class="text-center mt-4">
-                        <a href="login.php">Already have an account? Login</a>
-                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<?php require_once 'footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

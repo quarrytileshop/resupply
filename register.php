@@ -1,133 +1,138 @@
 <?php
-// register.php – Full expanded version with pre-filled vendor invite support – 2026-05-12
+/**
+ * resupply - Register Page
+ * Updated for new folder structure (May 14, 2026)
+ * All includes and asset paths updated
+ */
+
 $page_title = "Register - Resupply Rocket";
-require_once 'header.php';
+require_once 'includes/header.php';
 
 $error = '';
 $success = '';
-
-// Pre-filled values from vendor invite link
-$pre_vendor_id = (int)($_GET['vendor'] ?? 0);
-$pre_org_id    = (int)($_GET['org'] ?? 0);
-$pre_org_name  = '';
-
-if ($pre_org_id) {
-    $stmt = $pdo->prepare("SELECT name FROM organizations WHERE id = :id");
-    $stmt->execute(['id' => $pre_org_id]);
-    $row = $stmt->fetch();
-    if ($row) $pre_org_name = $row['name'];
-}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $first_name     = trim($_POST['first_name'] ?? '');
     $last_name      = trim($_POST['last_name'] ?? '');
     $email          = trim($_POST['email'] ?? '');
+    $username       = trim($_POST['username'] ?? '');
     $password       = $_POST['password'] ?? '';
-    $organization_id = $pre_org_id ?: (int)($_POST['organization_id'] ?? 0);
+    $confirm_password = $_POST['confirm_password'] ?? '';
+    $organization_id = (int)($_POST['organization_id'] ?? 0);
 
-    if ($first_name && $last_name && $email && $password && $organization_id) {
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email");
-        $stmt->execute(['email' => $email]);
-        if ($stmt->fetch()) {
-            $error = "An account with this email already exists.";
+    // Basic validation
+    if (empty($first_name) || empty($last_name) || empty($email) || empty($username) || empty($password)) {
+        $error = "All fields are required.";
+    } elseif ($password !== $confirm_password) {
+        $error = "Passwords do not match.";
+    } elseif (strlen($password) < 8) {
+        $error = "Password must be at least 8 characters.";
+    } else {
+        // Check if email or username already exists
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email OR username = :username");
+        $stmt->execute(['email' => $email, 'username' => $username]);
+        if ($stmt->rowCount() > 0) {
+            $error = "Email or username already exists.";
         } else {
+            // Hash password
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
             $stmt = $pdo->prepare("INSERT INTO users 
-                (first_name, last_name, email, password_hash, organization_id, approval_status, is_admin, is_propane, vendor_id) 
-                VALUES (:first_name, :last_name, :email, :password_hash, :organization_id, 'pending', 0, 0, :vendor_id)");
-            $stmt->execute([
+                (first_name, last_name, email, username, password_hash, organization_id, approval_status, created_at) 
+                VALUES 
+                (:first_name, :last_name, :email, :username, :password_hash, :organization_id, 'pending', NOW())");
+            
+            $success_insert = $stmt->execute([
                 'first_name'     => $first_name,
                 'last_name'      => $last_name,
                 'email'          => $email,
+                'username'       => $username,
                 'password_hash'  => $password_hash,
-                'organization_id'=> $organization_id,
-                'vendor_id'      => $pre_vendor_id
+                'organization_id' => $organization_id ?: null
             ]);
 
-            $success = "Account created successfully! Awaiting admin approval.";
-            
-            // Optional: send notification to superadmin
-            require_once 'email_functions.php';
-            sendApprovalNotification($email, $first_name . ' ' . $last_name);
+            if ($success_insert) {
+                $success = "Registration successful! Your account is pending approval. You will receive an email when approved.";
+                // Optionally send notification email to admin here
+            } else {
+                $error = "Registration failed. Please try again.";
+            }
         }
-    } else {
-        $error = "All fields are required.";
     }
-}
-
-// Fetch organizations for dropdown (only if not pre-filled)
-$organizations = [];
-if (!$pre_org_id) {
-    $stmt = $pdo->query("SELECT id, name FROM organizations ORDER BY name");
-    $organizations = $stmt->fetchAll();
 }
 ?>
 
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-md-8 col-lg-6">
             <div class="card">
                 <div class="card-body p-5">
-                    <h1 class="mb-4 text-center">Create New Account</h1>
-                    <p class="text-muted text-center mb-4">Join your organization on Resupply Rocket</p>
+                    <img src="assets/icons/logo-192.png" alt="Logo" class="mx-auto d-block mb-4" style="max-width:120px;">
+                    <h2 class="text-center mb-4">Create New Account</h2>
 
                     <?php if ($error): ?>
                         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
                     <?php endif; ?>
+
                     <?php if ($success): ?>
                         <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
-                    <?php endif; ?>
-
-                    <form method="post">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">First Name</label>
-                                <input type="text" name="first_name" class="form-control" value="<?= htmlspecialchars($_POST['first_name'] ?? '') ?>" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Last Name</label>
-                                <input type="text" name="last_name" class="form-control" value="<?= htmlspecialchars($_POST['last_name'] ?? '') ?>" required>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Email</label>
-                                <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Password</label>
-                                <input type="password" name="password" class="form-control" required>
-                            </div>
-
-                            <!-- Organization field -->
-                            <?php if ($pre_org_id && $pre_org_name): ?>
-                                <div class="col-12">
-                                    <label class="form-label">Organization</label>
-                                    <input type="text" class="form-control bg-light" value="<?= htmlspecialchars($pre_org_name) ?>" readonly>
-                                    <input type="hidden" name="organization_id" value="<?= $pre_org_id ?>">
-                                </div>
-                            <?php else: ?>
-                                <div class="col-12">
-                                    <label class="form-label">Organization</label>
-                                    <select name="organization_id" class="form-select" required>
-                                        <option value="">Select your organization</option>
-                                        <?php foreach ($organizations as $org): ?>
-                                            <option value="<?= $org['id'] ?>"><?= htmlspecialchars($org['name']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                            <?php endif; ?>
+                        <div class="text-center mt-4">
+                            <a href="login.php" class="btn btn-primary">Go to Login</a>
                         </div>
+                    <?php else: ?>
+                        <form method="post">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" name="first_name" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" name="last_name" class="form-control" required>
+                                </div>
+                            </div>
 
-                        <button type="submit" class="btn btn-primary w-100 mt-4 py-3">Register Account</button>
-                    </form>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
 
-                    <div class="text-center mt-4">
-                        <a href="login.php">Already have an account? Login</a>
-                    </div>
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" name="username" class="form-control" required>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" name="password" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Confirm Password</label>
+                                    <input type="password" name="confirm_password" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <!-- Optional: Organization selection (if pre-register is enabled) -->
+                            <div class="mb-3">
+                                <label class="form-label">Organization (optional)</label>
+                                <select name="organization_id" class="form-select">
+                                    <option value="">— None / New Organization —</option>
+                                    <!-- Populated by admin pre-register if needed -->
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100">Register Account</button>
+                        </form>
+
+                        <div class="text-center mt-4">
+                            Already have an account? <a href="login.php">Login here</a>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<?php require_once 'footer.php'; ?>
+<?php require_once 'includes/footer.php'; ?>

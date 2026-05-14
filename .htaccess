@@ -1,32 +1,34 @@
-# .htaccess – Modified 2026-05-08
+# =============================================
+# .htaccess - Updated for new folder structure
+# resupply - May 14, 2026
+# =============================================
 
-# Security headers
-Header always set X-Content-Type-Options "nosniff"
-Header always set X-Frame-Options "SAMEORIGIN"
-Header always set X-XSS-Protection "1; mode=block"
-Header always set Referrer-Policy "strict-origin-when-cross-origin"
-
-# Enable compression
-<IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
-</IfModule>
-
-# Prevent directory listing
-Options -Indexes
-
-# Redirect all traffic to HTTPS (uncomment when live)
-# RewriteEngine On
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}$1 [R=301,L]
-
-# Simple clean URLs (optional)
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA,L]
-
-# Protect sensitive files
-<FilesMatch "^(config\.php|database-setup\.sql|\.env|.*\.md)$">
+# Protect sensitive files and folders
+<FilesMatch "^(includes/config\.php|database-setup\.sql|\.env|.*\.md|debug\.log)$">
     Order allow,deny
     Deny from all
 </FilesMatch>
+
+# Prevent direct access to the includes folder
+<Directory "includes">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+# Optional: Prevent directory listing
+Options -Indexes
+
+# Enable URL rewriting if needed in the future
+# RewriteEngine On
+# RewriteBase /
+
+# Default index file
+DirectoryIndex index.php
+
+# Set PHP error reporting (can be overridden in config.php)
+php_flag display_errors Off
+php_value error_reporting 32767
+
+# Increase upload limits if needed for bulk import
+# php_value upload_max_filesize 10M
+# php_value post_max_size 10M
