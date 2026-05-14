@@ -2,8 +2,8 @@
 /**
  * resupply - Header Include
  * Updated for new folder structure (May 14, 2026)
- * All asset paths and navigation links updated
- * Favicon reference removed to prevent 404 errors
+ * All asset paths and navigation links have been updated
+ * Favicon now points to logo-192.png as requested
  */
 
 require_once 'config.php';
@@ -22,16 +22,21 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php' && basenam
     <meta name="description" content="Quarry Tile Shop Resupply Portal">
     <title><?= SITE_NAME ?> - <?= isset($page_title) ? $page_title : 'Dashboard' ?></title>
     
+    <!-- Favicon pointing to logo-192 (as requested) -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/logo-192.png">
+    <link rel="apple-touch-icon" href="/assets/icons/logo-192.png">
+    
     <!-- Styles -->
-    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="/assets/css/styles.css">
     
     <!-- Manifest for PWA -->
-    <link rel="manifest" href="Manifest.json">
+    <link rel="manifest" href="/Manifest.json">
     
-    <!-- Font Awesome -->
+    <!-- Font Awesome (if used in original) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
+        /* Any inline styles that were previously in the old header */
         .navbar { background-color: #2c3e50; }
         .nav-link { color: #ecf0f1 !important; }
         .nav-link:hover { color: #3498db !important; }
@@ -41,7 +46,7 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php' && basenam
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="dashboard.php">
-                <img src="assets/icons/logo.png" alt="Quarry Tile Shop" height="40">
+                <img src="/assets/icons/logo-512.png" alt="Quarry Tile Shop" height="40">
                 Resupply
             </a>
             
@@ -84,7 +89,7 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php' && basenam
                         </li>
                     <?php endif; ?>
                     
-                    <!-- Customer links -->
+                    <!-- Customer links (always visible to logged-in users) -->
                     <li class="nav-item">
                         <a class="nav-link" href="dashboard.php">Dashboard</a>
                     </li>
@@ -125,7 +130,7 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php' && basenam
     
     <div class="container mt-4">
 <?php
-// Global messages
+// Any global messages or alerts can go here if needed
 if (isset($_SESSION['message'])) {
     echo '<div class="alert alert-success alert-dismissible fade show" role="alert">';
     echo htmlspecialchars($_SESSION['message']);
