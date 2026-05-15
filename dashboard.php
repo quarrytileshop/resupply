@@ -1,8 +1,18 @@
 <?php
+/**
+ * resupply - Main Dashboard (FINAL Superadmin Redirect Fix)
+ * Date: May 15, 2026
+ */
+
 require_once 'includes/config.php';
 
 $page_title = 'Dashboard';
 
+// Strong role-based redirects
+if (is_super_admin()) {
+    header("Location: " . BASE_URL . "admin/admin_dashboard.php");
+    exit;
+}
 if (is_vendor()) {
     header("Location: " . BASE_URL . "vendor/vendor_dashboard.php");
     exit;
