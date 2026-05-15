@@ -1,4 +1,4 @@
-# Resupply Rocket Professional .htaccess
+# Resupply Rocket Professional .htaccess (FINAL Chrome-compatible version)
 RewriteEngine On
 Options -Indexes
 
@@ -8,7 +8,7 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Security headers
 Header always set X-Content-Type-Options "nosniff"
-Header always set X-Frame-Options "DENY"
+Header always set X-Frame-Options "SAMEORIGIN"
 Header always set X-XSS-Protection "1; mode=block"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
@@ -17,6 +17,3 @@ Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Order Allow,Deny
     Deny from all
 </FilesMatch>
-
-# Pretty URLs (optional future use)
-# RewriteRule ^([a-zA-Z0-9_-]+)\.php$ $1.php [L]
