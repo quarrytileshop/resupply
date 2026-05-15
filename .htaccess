@@ -1,4 +1,4 @@
-# Resupply Rocket Professional .htaccess
+# Resupply Rocket Professional .htaccess (Updated for Chrome compatibility)
 RewriteEngine On
 Options -Indexes
 
@@ -6,9 +6,9 @@ Options -Indexes
 RewriteCond %{HTTPS} off
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# Security headers
+# Security headers - relaxed X-Frame-Options so password managers work
 Header always set X-Content-Type-Options "nosniff"
-Header always set X-Frame-Options "DENY"
+Header always set X-Frame-Options "SAMEORIGIN"   # CHANGED FROM DENY
 Header always set X-XSS-Protection "1; mode=block"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
@@ -17,6 +17,3 @@ Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Order Allow,Deny
     Deny from all
 </FilesMatch>
-
-# Pretty URLs (optional future use)
-# RewriteRule ^([a-zA-Z0-9_-]+)\.php$ $1.php [L]
