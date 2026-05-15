@@ -1,50 +1,59 @@
 <?php
 /**
- * resupply - Shopping Lists Page
- * Updated for new folder structure (May 14, 2026)
- * Removed duplicate container (header.php already provides it)
+ * resupply - Shopping Lists Page (README-Aligned Rewrite)
+ * Now displays assigned lists as SCROLLABLE TABS per README
+ * Date: May 15, 2026
  */
 
-$page_title = "My Shopping Lists - Resupply Rocket";
 require_once 'includes/config.php';
+
+$page_title = 'Shopping Lists';
+
 require_once 'includes/header.php';
 
-if (!is_logged_in()) {
-    header("Location: login.php");
-    exit;
-}
-
-$organization_id = $_SESSION['organization_id'] ?? 0;
-
-// Fetch user's organization's shopping lists
-$stmt = $pdo->prepare("SELECT * FROM shopping_lists WHERE organization_id = :org_id ORDER BY name");
-$stmt->execute(['org_id' => $organization_id]);
+// Fetch user's/organization's shopping lists (multi-tenant safe)
+$stmt = $pdo->prepare("
+    SELECT * FROM shopping_lists 
+    WHERE (organization_id = ? OR user_id = ?) 
+    ORDER BY name ASC
+");
+$stmt->execute([$_SESSION['organization_id'] ?? 0, $_SESSION['user_id']]);
 $lists = $stmt->fetchAll();
 ?>
 
-<h1 class="mb-3">My Shopping Lists</h1>
-<p class="text-muted">These lists were built by your vendor for quick reordering.</p>
+<h1 class="mb-4">Your Shopping Lists</h1>
 
-<?php if (empty($lists)): ?>
-    <div class="alert alert-info">No shopping lists yet. Your vendor can create them for you.</div>
-<?php else: ?>
-    <div class="row g-4">
-        <?php foreach ($lists as $list): ?>
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5><?= htmlspecialchars($list['name']) ?></h5>
-                    <p class="text-muted"><?= htmlspecialchars($list['description'] ?? '') ?></p>
-                    <a href="orders/general_order.php?list_id=<?= $list['id'] ?>" class="btn btn-primary w-100">Use This List →</a>
-                </div>
-            </div>
-        </div>
-        <?php endforeach; ?>
-    </div>
-<?php endif; ?>
-
-<div class="mt-5">
-    <a href="dashboard.php" class="btn btn-secondary">← Back to Dashboard</a>
+<!-- Scrollable Tabs (exactly as described in README) -->
+<div class="nav nav-tabs mb-4 flex-nowrap overflow-auto" id="listTabs" role="tablist">
+    <?php foreach ($lists as $i => $list): ?>
+        <button class="nav-link <?= $i === 0 ? 'active' : '' ?>" 
+                id="tab-<?= $list['id'] ?>" 
+                data-bs-toggle="tab" 
+                data-bs-target="#list-<?= $list['id'] ?>" 
+                type="button">
+            <?= htmlspecialchars($list['name']) ?>
+        </button>
+    <?php endforeach; ?>
+    <?php if (empty($lists)): ?>
+        <button class="nav-link active">No Lists Yet</button>
+    <?php endif; ?>
 </div>
+
+<div class="tab-content">
+    <?php if (empty($lists)): ?>
+        <div class="alert alert-info">
+            No shopping lists yet. <a href="<?= BASE_URL ?>shopping_list_builder.php" class="btn btn-success">Create your first list</a>
+        </div>
+    <?php else: ?>
+        <?php foreach ($lists as $list): ?>
+            <div class="tab-pane fade <?= $loopIndex === 0 ? 'show active' : '' ?>" id="list-<?= $list['id'] ?>">
+                <a href="<?= BASE_URL ?>shopping_list_builder.php?id=<?= $list['id'] ?>" class="btn btn-primary">Edit This List →</a>
+                <a href="<?= BASE_URL ?>orders/order.php?list_id=<?= $list['id'] ?>" class="btn btn-success">Turn into Order</a>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+</div>
+
+<a href="<?= BASE_URL ?>shopping_list_builder.php" class="btn btn-success mt-4">+ Create New Shopping List</a>
 
 <?php require_once 'includes/footer.php'; ?>

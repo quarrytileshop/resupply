@@ -1,16 +1,22 @@
-# =============================================
-# .htaccess - Simplified for GoDaddy shared hosting
-# Updated May 14, 2026
-# =============================================
+# Resupply Rocket Professional .htaccess
+RewriteEngine On
+Options -Indexes
+
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Security headers
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "DENY"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
 # Protect sensitive files
-<FilesMatch "^(includes/config\.php|database-setup\.sql|\.env|.*\.md|debug\.log)$">
-    Order allow,deny
+<FilesMatch "(config|db_config|phpinfo|database-setup)">
+    Order Allow,Deny
     Deny from all
 </FilesMatch>
 
-# Prevent directory listing
-Options -Indexes
-
-# Default index file
-DirectoryIndex index.php
+# Pretty URLs (optional future use)
+# RewriteRule ^([a-zA-Z0-9_-]+)\.php$ $1.php [L]

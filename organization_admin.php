@@ -1,121 +1,57 @@
 <?php
 /**
- * resupply - Organization Admin Page
- * Updated for new folder structure (May 14, 2026)
- * All includes, asset paths, and internal links updated
+ * resupply - Organization Admin Page (Professional Rewrite)
+ * Org-admin only. Manage their own organization’s users and settings.
+ * Date: May 15, 2026
  */
 
-$page_title = "Organization Admin - Resupply Rocket";
 require_once 'includes/config.php';
-require_once 'includes/header.php';
 
-if (!is_logged_in() || !is_org_admin()) {
-    header("Location: login.php");
+if (!is_org_admin()) {
+    header("Location: " . BASE_URL . "dashboard.php");
     exit;
 }
 
-$message = $_SESSION['message'] ?? '';
-$error   = $_SESSION['error'] ?? '';
-unset($_SESSION['message'], $_SESSION['error']);
+$page_title = 'Organization Admin';
 
-$organization_id = $_SESSION['organization_id'] ?? 0;
+require_once 'includes/header.php';
 
-// Fetch organization details (preserves original logic)
-$stmt = $pdo->prepare("SELECT * FROM organizations WHERE id = :id");
-$stmt->execute(['id' => $organization_id]);
-$org = $stmt->fetch();
+// Fetch org users (scoped to current organization)
+$stmt = $pdo->prepare("SELECT * FROM users WHERE organization_id = ? ORDER BY email");
+$stmt->execute([$_SESSION['organization_id']]);
+$orgUsers = $stmt->fetchAll();
 ?>
 
-<div class="container mt-4">
-    <h1 class="mb-4">Organization Admin</h1>
-    <p class="text-muted">Manage your organization's settings, users, and vendor relationships.</p>
+<h1 class="mb-4">Organization Administration</h1>
 
-    <?php if ($message): ?>
-        <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
-    <?php endif; ?>
-    <?php if ($error): ?>
-        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
-
-    <div class="row g-4">
-        <!-- Organization Info Card -->
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0">Organization Details</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Name:</strong> <?= htmlspecialchars($org['name'] ?? 'Not set') ?></p>
-                    <p><strong>Address:</strong> <?= htmlspecialchars($org['address'] ?? 'Not set') ?></p>
-                    <p><strong>Contact:</strong> <?= htmlspecialchars($org['contact_email'] ?? 'Not set') ?></p>
-                    <a href="admin/admin_organizations.php" class="btn btn-outline-primary w-100">Edit Organization Details</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Links -->
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0">Quick Actions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="shopping_list_builder.php" class="btn btn-success">Build New Shopping List</a>
-                        <a href="orders/order.php" class="btn btn-primary">Create New Order</a>
-                        <a href="vendor/vendor_invite_org.php" class="btn btn-info">Invite Vendor</a>
-                        <a href="admin/admin_users.php" class="btn btn-warning">Manage Users</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Activity / Users -->
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Organization Users</h5>
-                </div>
-                <div class="card-body">
-                    <?php
-                    $stmt = $pdo->prepare("SELECT * FROM users WHERE organization_id = :org_id ORDER BY first_name");
-                    $stmt->execute(['org_id' => $organization_id]);
-                    $users = $stmt->fetchAll();
-                    ?>
-                    <?php if ($users): ?>
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($users as $u): ?>
-                                    <tr>
-                                        <td><?= htmlspecialchars($u['first_name'] . ' ' . $u['last_name']) ?></td>
-                                        <td><?= htmlspecialchars($u['email']) ?></td>
-                                        <td><?= $u['is_organization_admin'] ? '<span class="badge bg-success">Org Admin</span>' : 'User' ?></td>
-                                        <td><?= $u['approval_status'] === 'approved' ? '<span class="badge bg-success">Approved</span>' : '<span class="badge bg-warning">Pending</span>' ?></td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    <?php else: ?>
-                        <p class="text-muted">No users yet.</p>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5>Manage Your Team</h5>
+        <a href="<?= BASE_URL ?>admin/invite_user.php" class="btn btn-success">Invite New User to Organization</a>
     </div>
+</div>
 
-    <div class="mt-4">
-        <a href="dashboard.php" class="btn btn-secondary">← Back to Dashboard</a>
-    </div>
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($orgUsers as $user): ?>
+            <tr>
+                <td><?= htmlspecialchars($user['email']) ?></td>
+                <td><?= htmlspecialchars($user['role']) ?></td>
+                <td>
+                    <a href="<?= BASE_URL ?>edit_profile.php?id=<?= $user['id'] ?>" class="btn btn-sm btn-primary">Edit</a>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
