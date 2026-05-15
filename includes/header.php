@@ -2,21 +2,26 @@
 /**
  * resupply - Header Include
  * Updated for new folder structure (May 14, 2026)
- * Favicon points to logo-192.png
- * Navigation now ONLY shows for logged-in users
- * Container wrapper is now CONDITIONAL (public pages like login get their own clean full-screen layout)
- * Bootstrap 5.3 CDN included for proper styling
- * FIXED: require path for config.php (was pointing to wrong "includes/config.php")
+ * Added visible "Logout" button (bypasses broken dropdown)
  */
 
-require_once 'config.php';   // ← THIS IS THE FIX (header.php lives inside the includes/ folder)
+require_once 'config.php';
 
-// Redirect non-logged-in users away from protected pages
-if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php' 
-                    && basename($_SERVER['PHP_SELF']) !== 'register.php' 
-                    && basename($_SERVER['PHP_SELF']) !== 'forgot_password.php' 
-                    && basename($_SERVER['PHP_SELF']) !== 'reset_password.php'
-                    && basename($_SERVER['PHP_SELF']) !== 'index.php') {
+// Redirect logic
+if (is_logged_in() && in_array(basename($_SERVER['PHP_SELF']), ['login.php', 'register.php', 'forgot_password.php', 'reset_password.php', 'index.php'])) {
+    if (is_super_admin()) {
+        header("Location: admin/admin_dashboard.php");
+    } elseif (is_vendor()) {
+        header("Location: vendor/vendor_dashboard.php");
+    } elseif (is_org_admin()) {
+        header("Location: organization_admin.php");
+    } else {
+        header("Location: dashboard.php");
+    }
+    exit;
+}
+
+if (!is_logged_in() && !in_array(basename($_SERVER['PHP_SELF']), ['login.php', 'register.php', 'forgot_password.php', 'reset_password.php', 'index.php'])) {
     header("Location: login.php");
     exit;
 }
@@ -29,20 +34,12 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php'
     <meta name="description" content="Quarry Tile Shop Resupply Portal">
     <title><?= SITE_NAME ?> - <?= isset($page_title) ? $page_title : 'Resupply Rocket' ?></title>
     
-    <!-- Favicon pointing to logo-192 (as requested) -->
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/logo-192.png">
     <link rel="apple-touch-icon" href="/assets/icons/logo-192.png">
     
-    <!-- Bootstrap 5.3 CSS CDN - REQUIRED for clean cards, forms, centering -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    
-    <!-- Custom styles -->
     <link rel="stylesheet" href="/assets/css/styles.css">
-    
-    <!-- Manifest for PWA -->
     <link rel="manifest" href="/Manifest.json">
-    
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
@@ -53,10 +50,9 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php'
 </head>
 <body>
 <?php if (is_logged_in()): ?>
-    <!-- NAVIGATION ONLY FOR LOGGED-IN USERS -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="../dashboard.php">   <!-- ← fixed relative path for admin subfolder -->
+            <a class="navbar-brand" href="../dashboard.php">
                 <img src="/assets/icons/logo-512.png" alt="Quarry Tile Shop" height="40">
                 Resupply
             </a>
@@ -84,7 +80,6 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php'
                         <li class="nav-item"><a class="nav-link" href="../organization_admin.php">Org Admin</a></li>
                     <?php endif; ?>
                     
-                    <!-- Customer links -->
                     <li class="nav-item"><a class="nav-link" href="../dashboard.php">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="../shopping_lists.php">Shopping Lists</a></li>
                     <li class="nav-item"><a class="nav-link" href="../shopping_list_builder.php">Build List</a></li>
@@ -92,35 +87,23 @@ if (!is_logged_in() && basename($_SERVER['PHP_SELF']) !== 'login.php'
                     <li class="nav-item"><a class="nav-link" href="../history.php">Order History</a></li>
                 </ul>
                 
+                <!-- VISIBLE LOGOUT BUTTON -->
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle"></i> 
-                            <?= htmlspecialchars($_SESSION['first_name'] ?? 'User') ?>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger fw-bold" href="../logout.php">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="../edit_profile.php">Edit Profile</a></li>
-                            <li><a class="dropdown-item" href="../record_usage.php">Record Usage</a></li>
-                            <?php if (is_super_admin()): ?>
-                                <li><a class="dropdown-item" href="admin_impersonate.php">Impersonate User</a></li>
-                            <?php endif; ?>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="../logout.php">Logout</a></li>
-                        </ul>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
     
-    <!-- Logged-in pages get normal container -->
     <div class="container mt-4">
 <?php else: ?>
-    <!-- Public pages (login, register, etc.) get their own clean full-screen layout - no extra container -->
 <?php endif; ?>
 
 <?php
-// Global messages (only show for logged-in users)
 if (isset($_SESSION['message']) && is_logged_in()) {
     echo '<div class="alert alert-success alert-dismissible fade show" role="alert">';
     echo htmlspecialchars($_SESSION['message']);
@@ -128,3 +111,5 @@ if (isset($_SESSION['message']) && is_logged_in()) {
     unset($_SESSION['message']);
 }
 ?>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
